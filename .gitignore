@@ -1,6 +1,7 @@
 # Custom
 *.txt
 .chroma
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
