@@ -18,11 +18,15 @@ dependencies = [
     "chromadb>=0.5",
     # Core
     "langchain-core>=0.3",
+    # LLM
+    "langchain-gigachat>=0.5.1",
     # API
     "fastapi>=0.136.3",
     "pydantic>=2.13.4",
     "uvicorn>=0.48.0",
     "pydantic-settings>=2.14.1",
+    # Other
+    "pip-system-certs>=5.3",
 ]
 
 [dependency-groups]
