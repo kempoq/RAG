@@ -4,7 +4,7 @@ from fastapi import Depends
 
 from app.src.api.vector.documents.dependencies import DocumentsServiceDep
 from app.src.api.vector.service import VectorRagService
-from app.src.core.database import VectorStoreDep
+from app.src.core.database.vector_database import VectorStoreDep
 
 
 def get_vector_rag_service(
