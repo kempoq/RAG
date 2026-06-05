@@ -1,7 +1,7 @@
 QUERY_TEMPLATE = """
-Hello. Ask the question based on given information
-Question:
+Привет. Ответь на вопрос, используя предоставленный контекст
+Вопрос:
 {user_query}
-Given information:
+Представленный контекст:
 {relevant_information}
 """

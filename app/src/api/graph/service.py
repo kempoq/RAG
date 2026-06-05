@@ -6,6 +6,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_gigachat.chat_models import GigaChat
 from langchain_neo4j import GraphCypherQAChain
+from neo4j.exceptions import CypherSyntaxError
 
 from app.src.api.graph.constants import (
     FIX_CYPHER_TEMPLATE,
@@ -47,7 +48,7 @@ class GraphRagService:
     ) -> str:
         """
         Генерирует Cypher запрос на основе вопроса. Если есть ошибка в синтаксисе,
-        то генерирует заново с учетом ошибки
+        то генерирует заново с учетом ошибки (генерация через LLM)
         """
 
         result_prompt = None
@@ -65,14 +66,14 @@ class GraphRagService:
             try:
                 self._gs_repository.explain_query(cypher_query)
                 return cypher_query
-            except Exception as e:
-                error_msg = str(e)
+            except CypherSyntaxError as cse:
+                error_msg = str(cse)
                 print(
                     f"Attempt {retry_count + 1} is unsuccessfull. Error: {error_msg[:100]}"
                 )
 
                 if retry_count == max_retries:
-                    raise e
+                    raise cse
 
                 result_prompt = FIX_CYPHER_TEMPLATE.format(
                     error_msg=error_msg,
@@ -120,7 +121,6 @@ class GraphRagService:
         print("Start querying LLM with Graph DB")
         qa_chain = self._init_qa_chain()
         answer = qa_chain.invoke({"query": query})
-        print(answer["intermediate_steps"])
         print("Answer is got")
 
         return answer.get("result", "")

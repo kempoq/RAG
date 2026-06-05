@@ -14,7 +14,9 @@ class DocumentsService:
 
         return [file_path.name for file_path in self.dir.glob(f"*.{ext}")]
 
-    def _get_documents(self, ext: str) -> tuple[list[str], list[Document]]:
+    def _get_documents(
+        self, exclude_sources: list[str], ext: str
+    ) -> tuple[list[str], list[Document]]:
         """Возвращает список файлов и документов (содержимое файлов, инкапсулированное в класс Document)"""
 
         print("Start collection documents")
@@ -22,7 +24,7 @@ class DocumentsService:
         files = []
 
         for file_path in self.dir.glob(f"*.{ext}"):
-            if file_path.is_file():
+            if file_path.is_file() and file_path.name not in exclude_sources:
                 with open(file_path, encoding="utf-8") as f:
                     content = f.read()
                     if len(content) == 0:
@@ -32,7 +34,7 @@ class DocumentsService:
                     docs.append(
                         Document(
                             page_content=content,
-                            metadata={"source": file_path.name.split(".", 1)[0]},
+                            metadata={"source": file_path.name},
                         )
                     )
 
@@ -40,11 +42,11 @@ class DocumentsService:
         return files, docs
 
     def get_documents_by_chunks(
-        self, ext: str = "txt"
+        self, exclude_sources: list[str], ext: str = "txt"
     ) -> tuple[list[str], list[Document]]:
         """Возвращает список документов, разделенных на чанки"""
 
-        files, docs = self._get_documents(ext)
+        files, docs = self._get_documents(exclude_sources, ext)
         if not docs:
             return files, docs
 

@@ -8,6 +8,6 @@ class GetDocumentsQuery(BaseModel):
 class AddDocumentsRequest(GetDocumentsQuery): ...
 
 
-class ChatQuery(BaseModel):
+class ChatRequest(BaseModel):
     query: str = Field(min_length=1)
     docs_count: int = Field(ge=3, default=3)
