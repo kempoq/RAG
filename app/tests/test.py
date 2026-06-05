@@ -1,5 +1,5 @@
-from app.src.core.database.vector_database import get_vector_store
+from app.src.core.logger import configure_logging
 
 if __name__ == "__main__":
-    vs = get_vector_store()
-    print(vs.get())
+    lo = configure_logging()
+    print(type(lo))

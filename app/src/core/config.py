@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     chroma_collection_name: str = "rag"
     chroma_dir: str = ".chroma"
     files_dir: str = "files"
+    logging_conf_path: str = "logging_conf.yaml"
     chunk_size: int = 1000
     chunk_overlap: int = 200
     embedding_base_url: str = "http://127.0.0.1:1234/v1"

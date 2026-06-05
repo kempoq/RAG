@@ -1,8 +1,12 @@
+import logging
+
 from langchain_chroma import Chroma
 from langchain_gigachat.chat_models import GigaChat
 
 from app.src.api.vector.constants import QUERY_TEMPLATE
 from app.src.api.vector.documents.service import DocumentsService
+
+logger = logging.getLogger(__name__)
 
 
 class VectorRagService:
@@ -30,20 +34,19 @@ class VectorRagService:
     def add_documents(self, ext: str = "txt") -> tuple[list[str], list[str]]:
         """Добавляет разделенные на чанки документы в векторную БД"""
 
-        print("Start adding documents in vector store")
+        logger.info("Start adding documents in vector store")
         exclude_sources = self._get_all_docs_sources()
-        print(exclude_sources)
         files, docs_chunks = self._documents_service.get_documents_by_chunks(
             exclude_sources, ext
         )
 
         if not docs_chunks:
-            print("There are no new documents")
+            logger.info("There are no new documents")
             return [], []
 
         ids = self._vs_repository.add_documents(docs_chunks)
 
-        print("Documents are inserted")
+        logger.info("Documents are inserted")
         return files, ids
 
     def chat(self, query: str, docs_count: int = 3) -> str:
@@ -52,7 +55,7 @@ class VectorRagService:
         Далее возвращает ответ
         """
 
-        print("Start chatting")
+        logger.info("Start chatting using simple RAG")
         relevant_docs = self._vs_repository.similarity_search(query, k=docs_count)
         augmented_query = QUERY_TEMPLATE.format(
             user_query=query,
@@ -63,5 +66,5 @@ class VectorRagService:
 
         answer = self._llm.invoke(augmented_query).content
 
-        print("Answer is got")
+        logger.info("Answer is got")
         return answer

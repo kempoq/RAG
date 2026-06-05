@@ -4,7 +4,10 @@ from fastapi import FastAPI
 
 from app.src.api.main import api
 from app.src.core.database.graph_database import get_graph, load_graph
+from app.src.core.logger import configure_logging
 from app.src.core.ml_models import get_embedding_model_api
+
+configure_logging()
 
 
 @asynccontextmanager

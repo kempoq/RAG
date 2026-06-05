@@ -1,7 +1,10 @@
+import logging
 from pathlib import Path
 
 from langchain_core.documents import Document
 from langchain_text_splitters import TextSplitter
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentsService:
@@ -19,7 +22,7 @@ class DocumentsService:
     ) -> tuple[list[str], list[Document]]:
         """Возвращает список файлов и документов (содержимое файлов, инкапсулированное в класс Document)"""
 
-        print("Start collection documents")
+        logger.debug("Start collection documents")
         docs = []
         files = []
 
@@ -38,7 +41,7 @@ class DocumentsService:
                         )
                     )
 
-        print("Documents are collected")
+        logger.debug("Documents are collected")
         return files, docs
 
     def get_documents_by_chunks(
@@ -50,8 +53,8 @@ class DocumentsService:
         if not docs:
             return files, docs
 
-        print("Start splitting documents")
+        logger.info("Start splitting documents")
         chunks = self._text_splitter.split_documents(docs)
-        print("Documents are splitted")
+        logger.info("Documents are splitted")
 
         return files, chunks

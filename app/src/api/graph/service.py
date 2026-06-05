@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from typing import Any
 
@@ -16,6 +17,8 @@ from app.src.api.graph.constants import (
 from app.src.api.graph.repository import GraphRagRepository
 from app.src.api.graph.utlis import extract_cypher_from_markdown
 
+logger = logging.getLogger(__name__)
+
 
 class GraphRagService:
     def __init__(self, graph_rag_repository: GraphRagRepository, llm: GigaChat) -> None:
@@ -25,14 +28,14 @@ class GraphRagService:
     def get_stats(self) -> dict[str, Any]:
         """Возвращает статистику по графу"""
 
-        print("Start getting stats")
+        logger.info("Start getting stats")
         stats = {
             "nodes_count": self._gs_repository.get_nodes_count(),
             "nodes_count_by_types": self._gs_repository.get_nodes_count_by_types(),
             "rels_count": self._gs_repository.get_rels_count(),
             "rels_count_by_types": self._gs_repository.get_rels_count_by_types(),
         }
-        print("Stats are got")
+        logger.info("Stats are got")
 
         return stats
 
@@ -68,7 +71,7 @@ class GraphRagService:
                 return cypher_query
             except CypherSyntaxError as cse:
                 error_msg = str(cse)
-                print(
+                logger.warning(
                     f"Attempt {retry_count + 1} is unsuccessfull. Error: {error_msg[:100]}"
                 )
 
@@ -88,7 +91,7 @@ class GraphRagService:
     ) -> GraphCypherQAChain:
         """Инициализирует цепочку для ответа на вопросы по графу"""
 
-        print("Start initializing QA-chain")
+        logger.debug("Start initializing QA-chain")
         qa_prompt = PromptTemplate(
             input_variables=["context", "question"],
             template=PROMPT_TEMPLATE,
@@ -111,16 +114,16 @@ class GraphRagService:
             allow_dangerous_requests=True,
             return_intermediate_steps=True,
         )
-        print("QA-chain is initialized")
+        logger.debug("QA-chain is initialized")
 
         return chain
 
     def chat(self, query: str) -> str:
         """Реализует логику графового RAG"""
 
-        print("Start querying LLM with Graph DB")
+        logger.info("Start chatting using Graph RAG")
         qa_chain = self._init_qa_chain()
         answer = qa_chain.invoke({"query": query})
-        print("Answer is got")
+        logger.info("Answer is got")
 
         return answer.get("result", "")
