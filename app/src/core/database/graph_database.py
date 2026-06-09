@@ -1,21 +1,30 @@
+import logging
 from typing import Any
 
 from langchain_neo4j import Neo4jGraph
 
 from app.src.core.config import env_settings
 from app.src.core.database.constants import CONSTRAINTS, SAMPLE_DOCS, UNIQUE_KEYS
+from app.src.core.exceptions import GraphDbError
+
+logger = logging.getLogger(__name__)
 
 
 def get_graph() -> Neo4jGraph:
     """Создаёт подключение к Neo4j"""
 
-    return Neo4jGraph(
-        url=env_settings.neo4j_uri,
-        username=env_settings.neo4j_user,
-        password=env_settings.neo4j_password.get_secret_value(),
-        database=env_settings.neo4j_database,
-        refresh_schema=False,
-    )
+    try:
+        neo4j_client = Neo4jGraph(
+            url=env_settings.neo4j_uri,
+            username=env_settings.neo4j_user,
+            password=env_settings.neo4j_password.get_secret_value(),
+            database=env_settings.neo4j_database,
+            refresh_schema=False,
+        )
+    except Exception as e:
+        raise GraphDbError("Connection failed", e)
+
+    return neo4j_client
 
 
 def create_constraints(graph: Neo4jGraph) -> None:
@@ -23,7 +32,7 @@ def create_constraints(graph: Neo4jGraph) -> None:
 
     for c in CONSTRAINTS:
         graph.query(c)
-    print("✅ All constraints are created/approved.")
+    logger.info("All constraints are created/approved.")
 
 
 def load_docs_to_graph(graph: Neo4jGraph, docs: list[dict[str, Any]]) -> None:
@@ -76,7 +85,7 @@ def load_docs_to_graph(graph: Neo4jGraph, docs: list[dict[str, Any]]) -> None:
                 },
             )
 
-    print(f"✅ Loaded documents: {len(docs)}. Graph is updated incrementally.")
+    logger.info(f"Loaded documents: {len(docs)}. Graph is updated incrementally.")
 
 
 def is_graph_empty(graph: Neo4jGraph) -> bool:
@@ -90,11 +99,14 @@ def is_graph_empty(graph: Neo4jGraph) -> bool:
 def load_graph(graph: Neo4jGraph) -> None:
     """Заполняет граф, если в графе нет связей (начальна загрузка)"""
 
-    if not is_graph_empty(graph):
-        print("Graph isn't empty")
-        return
+    try:
+        if not is_graph_empty(graph):
+            logger.info("Graph isn't empty")
+            return
 
-    print("Start filling graph")
-    create_constraints(graph)
-    load_docs_to_graph(graph, SAMPLE_DOCS)
-    print("Graph is filled")
+        logger.info("Start filling graph")
+        create_constraints(graph)
+        load_docs_to_graph(graph, SAMPLE_DOCS)
+        logger.info("Graph is filled")
+    except Exception as e:
+        raise GraphDbError("Error during loading graph", e)

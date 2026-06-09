@@ -1,44 +1,48 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Form
 from fastapi.responses import JSONResponse
 
-from app.src.api.vector.dependencies import VectorRagServiceDep
+from app.src.api.vector.dependencies import VectorRagChatServiceDep, VectorRagServiceDep
 from app.src.api.vector.schemas import (
     AddDocumentsRequest,
     ChatRequest,
-    GetDocumentsQuery,
 )
 
 vector_router = APIRouter(prefix="/vector", tags=["vector_rag"])
 
 
-@vector_router.get("/store/docs")
-def get_documents(
-    vectore_rag_service: VectorRagServiceDep,
-    query_params: Annotated[GetDocumentsQuery, Query()],
-):
-    """Вывод файлов в директории с указанным расширением"""
+@vector_router.get("/storage/docs")
+def get_downloaded_files(vectore_rag_service: VectorRagServiceDep):
+    """Вывод загруженных файлов"""
 
-    d_files, nd_files = vectore_rag_service.get_filenames(ext=query_params.ext)
+    files = vectore_rag_service.get_downloaded_files()
 
-    return {"downloaded": d_files, "pending": nd_files}
+    return {"files": files}
 
 
-@vector_router.post("/store/docs")
+@vector_router.get("/storage/info")
+def get_storage_info(vectore_rag_service: VectorRagServiceDep):
+    storage_info = vectore_rag_service.get_info()
+
+    return storage_info
+
+
+@vector_router.post("/storage/docs")
 def add_documents(
     vectore_rag_service: VectorRagServiceDep,
-    request_data: AddDocumentsRequest,
+    request_data: Annotated[
+        AddDocumentsRequest, Form(..., media_type="multipart/form-data")
+    ],
 ):
     """Добавление документов в векторную БД"""
 
-    files, ids = vectore_rag_service.add_documents(ext=request_data.ext)
+    ids = vectore_rag_service.add_documents(files=[request_data.file])
 
     if ids:
         response = JSONResponse(
             content={
-                "msg": f"{len(files)} файлов разделены на {len(ids)} документов и загружены в векторную БД",
-                "files": files,
+                "msg": f"В векторную БД загружено {len(ids)} документов",
                 "ids10": ids[:10],
             },
             status_code=201,
@@ -46,8 +50,7 @@ def add_documents(
     else:
         response = JSONResponse(
             content={
-                "msg": "Нет новых новых файлов, документы не были добавлены в БД",
-                "files": None,
+                "msg": "Документы не были загружены в БД",
                 "ids10": None,
             },
             status_code=200,
@@ -58,12 +61,12 @@ def add_documents(
 
 @vector_router.post("/chat")
 def chat(
-    vectore_rag_service: VectorRagServiceDep,
+    vectore_rag_chat_service: VectorRagChatServiceDep,
     request_data: ChatRequest,
 ):
     """Запрос к LLM (RAG)"""
 
-    answer = vectore_rag_service.chat(
+    answer = vectore_rag_chat_service.chat(
         query=request_data.query, docs_count=request_data.docs_count
     )
 

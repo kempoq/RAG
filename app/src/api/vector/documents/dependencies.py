@@ -19,10 +19,7 @@ TextSplitterDep = Annotated[RecursiveCharacterTextSplitter, Depends(get_text_spl
 
 
 def get_documents_service(text_splitter: TextSplitterDep) -> DocumentsService:
-    return DocumentsService(
-        text_splitter=text_splitter,
-        dir=settings.files_dir,
-    )
+    return DocumentsService(text_splitter=text_splitter)
 
 
 DocumentsServiceDep = Annotated[DocumentsService, Depends(get_documents_service)]
