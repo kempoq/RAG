@@ -31,7 +31,7 @@ function renderEmbeddedFiles(filesList, filesInfo) {
 
 function fillFilesList(filesInfo) {
     const filesList = document.getElementById("documentsList");
-    filesList.removeChild(filesList.lastElementChild);
+    filesList.lastElementChild.classList.add("hidden");
 
     renderEmbeddedFiles(filesList, filesInfo["files"]);
 }
@@ -146,6 +146,10 @@ function initUploadArea() {
     });
 }
 
+function clearSelectedFiles() {
+    document.getElementById("selected-files").innerHTML = "";
+    selectedFiles.length = 0;
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
     const filesInfo = await sendApiRequest("/api/v1/vector/storage/docs", { method: "GET" });
@@ -156,6 +160,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     initUploadArea();
 });
 
-document.getElementById("uploadButton").addEventListener("click", () => {
-    console.log(selectedFiles)
+document.getElementById("uploadButton").addEventListener("click", async () => {
+    if (selectedFiles.length === 0) return;
+
+    const formData = new FormData();
+    selectedFiles.forEach(f => formData.append("files", f));
+
+    await sendApiRequest("/api/v1/vector/storage/docs", {
+        method: "POST",
+        body: formData
+    });
+    clearSelectedFiles();
 })

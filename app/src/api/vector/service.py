@@ -53,6 +53,7 @@ class VectorRagService:
 
         logger.info("Start adding documents in vector store")
         exclude_sources = self._get_all_docs_sources()
+        logger.debug(f"Exclude sources: {', '.join(exclude_sources)}")
         docs_chunks = self._documents_service.get_document_chunks(
             files, exclude_sources
         )

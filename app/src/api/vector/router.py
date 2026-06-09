@@ -37,7 +37,7 @@ def add_documents(
 ):
     """Добавление документов в векторную БД"""
 
-    ids = vectore_rag_service.add_documents(files=[request_data.file])
+    ids = vectore_rag_service.add_documents(files=request_data.files)
 
     if ids:
         response = JSONResponse(

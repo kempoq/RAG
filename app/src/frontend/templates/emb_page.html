@@ -35,7 +35,7 @@
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-2xl font-bold text-slate-900">Knowledge Base</h1>
-            <p class="text-slate-500 mt-1">Upload documents to embed and index them for retrieval.</p>
+            <p class="text-slate-500 mt-1">Upload files to embed and index them for retrieval.</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -45,7 +45,7 @@
                 
                 <!-- Upload Card -->
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-slate-900 mb-4">Upload Documents</h2>
+                    <h2 class="text-lg font-semibold text-slate-900 mb-4">Upload Files</h2>
                     
                     <!-- Drop Zone -->
                     <div 
@@ -57,15 +57,13 @@
                         </div>
                         <p class="text-sm font-medium text-slate-700">Drag & drop files here</p>
                         <p class="text-xs text-slate-500 mt-1">or click to browse</p>
-                        <p class="text-xs text-slate-400 mt-2">PDF, TXT, DOCX, MD — up to 50MB each</p>
+                        <p class="text-xs text-slate-400 mt-2">TXT — up to 50MB each</p>
                     </div>
 
                     <input type="file" id="file-input" multiple accept=".pdf,.txt,.docx,.md" class="hidden">
 
                     <!-- Selected Files List (appears inside upload card) -->
-                    <div id="selected-files" class="hidden mt-4 space-y-2">
-                        <!-- JS injects file items here -->
-                    </div>
+                    <div id="selected-files" class="hidden mt-4 space-y-2"></div>
 
                     <!-- Upload Button -->
                     <div id="upload-action" class="hidden mt-4">
@@ -78,19 +76,16 @@
                     </div>
 
                     <div class="flex gap-2 mt-4">
-                        <span class="px-3 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">PDF</span>
                         <span class="px-3 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">TXT</span>
-                        <span class="px-3 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">DOCX</span>
-                        <span class="px-3 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">Markdown</span>
                     </div>
                 </div>
 
                 <!-- Document List (MVP: no status, no delete buttons) -->
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-100">
-                        <h2 class="text-lg font-semibold text-slate-900">Embedded Documents</h2>
+                        <h2 class="text-lg font-semibold text-slate-900">Embedded Files</h2>
                     </div>
-                    <div class="divide-y divide-slate-100" id="documentsList">
+                    <div class="h-64 divide-y divide-slate-100 overflow-y-auto" id="documentsList">
                         <p class="text-center p-4">Empty</p>
                     </div>
                 </div>

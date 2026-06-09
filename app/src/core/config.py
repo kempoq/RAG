@@ -3,8 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    embedding_model_name: str = "deepvk/USER-bge-m3"
     chroma_collection_name: str = "rag"
+    env: str = "test"
     chroma_dir: str = ".chroma"
     logging_conf_path: str = "logging_conf.yaml"
     chunk_size: int = 1000

@@ -4,7 +4,9 @@ function convertBodyToString(options) {
 }
 
 export async function sendApiRequest(url, options) {
-    if (options["headers"] && options["headers"]["Content-Type"])
+    if (options["headers"]
+            && options["headers"]["Content-Type"]
+                && !options["headers"]["Content-Type"].includes("multipart/form-data"))
         convertBodyToString(options);
 
     const response = await fetch(url, {...options});
