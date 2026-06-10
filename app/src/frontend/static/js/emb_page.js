@@ -29,14 +29,16 @@ function renderEmbeddedFiles(filesList, filesInfo) {
     }
 }
 
-function fillFilesList(filesInfo) {
+async function fillFilesList() {
+    const filesInfo = await sendApiRequest("/api/v1/vector/storage/docs", { method: "GET" });
     const filesList = document.getElementById("documentsList");
     filesList.lastElementChild.classList.add("hidden");
 
     renderEmbeddedFiles(filesList, filesInfo["files"]);
 }
 
-function fillStorageInfo(storageInfo) {
+async function fillStorageInfo() {
+    const storageInfo = await sendApiRequest("/api/v1/vector/storage/info", { method: "GET" });
     document.getElementById("totalDocumentsValue").textContent = storageInfo["total_docs"];
     document.getElementById("embeddingModelName").textContent = storageInfo["embedding_model"];
 }
@@ -151,15 +153,6 @@ function clearSelectedFiles() {
     selectedFiles.length = 0;
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const filesInfo = await sendApiRequest("/api/v1/vector/storage/docs", { method: "GET" });
-    const storageInfo = await sendApiRequest("/api/v1/vector/storage/info", { method: "GET" });
-
-    fillFilesList(filesInfo);
-    fillStorageInfo(storageInfo);
-    initUploadArea();
-});
-
 document.getElementById("uploadButton").addEventListener("click", async () => {
     if (selectedFiles.length === 0) return;
 
@@ -171,4 +164,8 @@ document.getElementById("uploadButton").addEventListener("click", async () => {
         body: formData
     });
     clearSelectedFiles();
-})
+});
+
+await fillFilesList();
+await fillStorageInfo();
+initUploadArea();

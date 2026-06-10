@@ -66,8 +66,12 @@ def chat(
 ):
     """Запрос к LLM (RAG)"""
 
-    answer = vectore_rag_chat_service.chat(
+    answer, relevant_info = vectore_rag_chat_service.chat(
         query=request_data.query, docs_count=request_data.docs_count
     )
 
-    return {"query": request_data.query, "answer": answer}
+    return {
+        "query": request_data.query,
+        "relevant_info": relevant_info,
+        "answer": answer,
+    }

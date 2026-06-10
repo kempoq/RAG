@@ -73,7 +73,7 @@ class VectorRagChatService:
         self._vs_repository = vector_store
         self._llm = llm
 
-    def chat(self, query: str, docs_count: int = 3) -> str:
+    def chat(self, query: str, docs_count: int = 3) -> tuple[str, list[str]]:
         """
         Реализует логику RAG: отправляет запрос, дополненный данными из векторной БД, в LLM.
         Далее возвращает ответ
@@ -81,14 +81,14 @@ class VectorRagChatService:
 
         logger.info("Start chatting using simple RAG")
         relevant_docs = self._vs_repository.similarity_search(query, k=docs_count)
+        relevant_docs_content = [rdoc.page_content for rdoc in relevant_docs]
+
         augmented_query = QUERY_TEMPLATE.format(
             user_query=query,
-            relevant_information="\n".join(
-                [rdoc.page_content for rdoc in relevant_docs]
-            ),
+            relevant_information="\n".join(relevant_docs_content),
         )
 
         answer = self._llm.invoke(augmented_query).content
 
         logger.info("Answer is got")
-        return answer
+        return answer, relevant_docs_content
