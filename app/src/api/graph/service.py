@@ -5,7 +5,6 @@ from typing import Any
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableLambda
-from langchain_gigachat.chat_models import GigaChat
 from langchain_neo4j import GraphCypherQAChain
 from neo4j.exceptions import CypherSyntaxError
 
@@ -16,12 +15,15 @@ from app.src.api.graph.constants import (
 )
 from app.src.api.graph.repository import GraphRagRepository
 from app.src.api.graph.utlis import extract_cypher_from_markdown
+from app.src.core.ml_models import GigaChatClient
 
 logger = logging.getLogger(__name__)
 
 
 class GraphRagService:
-    def __init__(self, graph_rag_repository: GraphRagRepository, llm: GigaChat) -> None:
+    def __init__(
+        self, graph_rag_repository: GraphRagRepository, llm: GigaChatClient
+    ) -> None:
         self._gs_repository = graph_rag_repository
         self._llm = llm
 

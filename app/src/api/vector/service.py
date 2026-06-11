@@ -2,12 +2,12 @@ import logging
 
 from fastapi import UploadFile
 from langchain_chroma import Chroma
-from langchain_gigachat.chat_models import GigaChat
 
 from app.src.api.vector.constants import QUERY_TEMPLATE
 from app.src.api.vector.documents.service import DocumentsService
 from app.src.api.vector.schemas import VectorDbInfo
 from app.src.core.config import settings
+from app.src.core.ml_models import GigaChatClient
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class VectorRagService:
 
 
 class VectorRagChatService:
-    def __init__(self, vector_store: Chroma, llm: GigaChat):
+    def __init__(self, vector_store: Chroma, llm: GigaChatClient):
         self._vs_repository = vector_store
         self._llm = llm
 
