@@ -1,20 +1,8 @@
 import logging
-from functools import partial
 from typing import Any
 
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnableLambda
-from langchain_neo4j import GraphCypherQAChain
-from neo4j.exceptions import CypherSyntaxError
-
-from app.src.api.graph.constants import (
-    FIX_CYPHER_TEMPLATE,
-    GENERATE_CYPHER_TEMPLATE,
-    PROMPT_TEMPLATE,
-)
 from app.src.api.graph.repository import GraphRagRepository
-from app.src.api.graph.utlis import extract_cypher_from_markdown
+from app.src.api.graph.workflow import WorkflowGraphFactory
 from app.src.core.ml_models import GigaChatClient
 
 logger = logging.getLogger(__name__)
@@ -22,10 +10,16 @@ logger = logging.getLogger(__name__)
 
 class GraphRagService:
     def __init__(
-        self, graph_rag_repository: GraphRagRepository, llm: GigaChatClient
+        self,
+        graph_rag_repository: GraphRagRepository,
+        llm: GigaChatClient,
+        max_fix_retries: int = 2,
     ) -> None:
         self._gs_repository = graph_rag_repository
         self._llm = llm
+        self._workflow_graph_factory = WorkflowGraphFactory(
+            graph_rag_repository, llm, max_fix_retries
+        )
 
     def get_stats(self) -> dict[str, Any]:
         """Возвращает статистику по графу"""
@@ -48,84 +42,12 @@ class GraphRagService:
 
         return graph_schema
 
-    def _generate_cypher_query(
-        self, inputs: dict[str, Any], max_retries: int, **_: dict[Any, Any]
-    ) -> str:
-        """
-        Генерирует Cypher запрос на основе вопроса. Если есть ошибка в синтаксисе,
-        то генерирует заново с учетом ошибки (генерация через LLM)
-        """
-
-        result_prompt = None
-        retry_count = 0
-
-        while True:
-            if result_prompt is None:
-                result_prompt = GENERATE_CYPHER_TEMPLATE.format(
-                    schema=inputs["schema"], question=inputs["question"]
-                )
-            cypher_query = extract_cypher_from_markdown(
-                self._llm.invoke(result_prompt).content
-            )
-
-            try:
-                self._gs_repository.explain_query(cypher_query)
-                return cypher_query
-            except CypherSyntaxError as cse:
-                error_msg = str(cse)
-                logger.warning(
-                    f"Attempt {retry_count + 1} is unsuccessfull. Error: {error_msg[:100]}"
-                )
-
-                if retry_count == max_retries:
-                    raise cse
-
-                result_prompt = FIX_CYPHER_TEMPLATE.format(
-                    error_msg=error_msg,
-                    schema=inputs["schema"],
-                    question=inputs["question"],
-                    cypher=cypher_query,
-                )
-                retry_count += 1
-
-    def _init_qa_chain(
-        self, max_query_generation_retries: int = 2
-    ) -> GraphCypherQAChain:
-        """Инициализирует цепочку для ответа на вопросы по графу"""
-
-        logger.debug("Start initializing QA-chain")
-        qa_prompt = PromptTemplate(
-            input_variables=["context", "question"],
-            template=PROMPT_TEMPLATE,
-        )
-
-        qa_chain = qa_prompt | self._llm | StrOutputParser()
-        cypher_generation_chain = RunnableLambda(
-            partial(
-                self._generate_cypher_query, max_retries=max_query_generation_retries
-            )
-        )
-
-        chain = GraphCypherQAChain(
-            graph=self._gs_repository.graph_db_conn,
-            graph_schema=self._gs_repository.get_graph_schema(),
-            cypher_generation_chain=cypher_generation_chain,
-            qa_chain=qa_chain,
-            verbose=True,
-            validate_cypher=True,
-            allow_dangerous_requests=True,
-            return_intermediate_steps=True,
-        )
-        logger.debug("QA-chain is initialized")
-
-        return chain
-
-    def chat(self, query: str) -> str:
+    def chat(self, query: str) -> dict[str, Any]:
         """Реализует логику графового RAG"""
 
-        logger.info("Start chatting using Graph RAG")
-        qa_chain = self._init_qa_chain()
-        answer = qa_chain.invoke({"query": query})
+        logger.info("Start Graph RAG workflow")
+        workflow_graph = self._workflow_graph_factory.create_workflow()
+        answer = workflow_graph.invoke({"question": query})
         logger.info("Answer is got")
 
-        return answer.get("result", "")
+        return answer

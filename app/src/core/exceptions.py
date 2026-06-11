@@ -18,3 +18,10 @@ class GraphDbError(ApiError):
 
     def __init__(self, msg: str, original_error: Exception) -> None:
         super().__init__("Neo4j", msg, original_error)
+
+
+class WorkflowGenerationError(ApiError):
+    """Ошибка при генерации графа операций для графового RAG"""
+
+    def __init__(self, msg: str, original_error: Exception) -> None:
+        super().__init__("GraphRAG", msg, original_error)

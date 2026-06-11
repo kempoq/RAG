@@ -1,4 +1,5 @@
 from langchain_neo4j import Neo4jGraph
+from neo4j import NotificationSeverity
 
 
 class GraphRagRepository:
@@ -48,10 +49,20 @@ class GraphRagRepository:
 
         return self._graph_db_conn.get_schema
 
-    def explain_query(self, query: str) -> None:
+    def check_query(self, query: str) -> list[str]:
         """
         Запускается запрос с EXPLAIN в начале. В итоге строится план запроса без получения данных.
-        Используется для проверки синтаксиса
+        Используется для проверки синтаксиса. Возвращаются уведомления с пометкой WARNING (если есть)
         """
 
-        self._graph_db_conn.query(f"EXPLAIN {query}")
+        with self._graph_db_conn._driver.session() as session:
+            result = session.run(query=f"EXPLAIN {query}")
+            summary = result.consume()
+
+            warning_statuses = [
+                notif.status_description
+                for notif in summary.gql_status_objects
+                if notif.severity == NotificationSeverity.WARNING
+            ]
+
+        return warning_statuses

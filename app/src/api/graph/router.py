@@ -30,4 +30,4 @@ def chat(graph_rag_service: GraphRagServiceDep, request_data: ChatRequest):
 
     answer = graph_rag_service.chat(query=request_data.query)
 
-    return {"query": request_data.query, "answer": answer}
+    return answer

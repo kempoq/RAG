@@ -20,6 +20,8 @@ def get_graph() -> Neo4jGraph:
             password=env_settings.neo4j_password.get_secret_value(),
             database=env_settings.neo4j_database,
             refresh_schema=False,
+            sanitize=True,
+            driver_config={"notifications_min_severity": "WARNING"},
         )
     except Exception as e:
         raise GraphDbError("Connection failed", e)
