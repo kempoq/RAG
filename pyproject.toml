@@ -28,6 +28,7 @@ dependencies = [
     # Other
     "pip-system-certs>=5.3",
     "pyyaml>=6.0.3",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]

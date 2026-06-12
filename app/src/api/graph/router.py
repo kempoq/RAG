@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.src.api.graph.dependencies import GraphRagServiceDep
-from app.src.api.graph.schemas import ChatRequest
+from app.src.api.graph.schemas import ChatRequest, ChatResponse
 
 graph_router = APIRouter(prefix="/graph", tags=["graph_rag"])
 
@@ -24,10 +24,12 @@ def get_graph_schema(graph_rag_service: GraphRagServiceDep):
     return {"schema": graph_schema}
 
 
-@graph_router.post("/chat")
-def chat(graph_rag_service: GraphRagServiceDep, request_data: ChatRequest):
+@graph_router.post("/chat", response_model=ChatResponse)
+def chat(
+    graph_rag_service: GraphRagServiceDep, request_data: ChatRequest
+) -> ChatResponse:
     """Запрос к LLM (графовый RAG)"""
 
-    answer = graph_rag_service.chat(query=request_data.query)
+    response = graph_rag_service.chat(query=request_data.query)
 
-    return {"query": request_data.query, "answer": answer}
+    return response

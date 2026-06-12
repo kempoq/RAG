@@ -17,4 +17,6 @@ def configure_logging() -> None:
     """Применяет конфигурацию логирования из файла"""
 
     logging_conf = parse_yaml_file(settings.logging_conf_path)
+    if settings.env == "test":
+        logging_conf["loggers"]["app"]["level"] = "DEBUG"
     logging.config.dictConfig(logging_conf)

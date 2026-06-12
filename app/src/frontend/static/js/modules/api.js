@@ -1,0 +1,30 @@
+function convertBodyToString(options) {
+    if (typeof options["body"] !== "string")
+        options["body"] = JSON.stringify(options["body"]);
+}
+
+export async function sendApiRequest(url, options) {
+    if (options["headers"]
+            && options["headers"]["Content-Type"]
+                && !options["headers"]["Content-Type"].includes("multipart/form-data"))
+        convertBodyToString(options);
+
+    const response = await fetch(url, {...options});
+    const contentType = response.headers.get("Content-Type");
+    var responseContent;
+
+    if (!contentType)
+        responseContent = null;
+    else if (contentType.includes("json"))
+        responseContent = await response.json();
+    else
+        responseContent = await response.text();
+
+    if (!response.ok) {
+        const errorMsg = `Request to API is failed: ${response.status} - ${response.statusText}`;
+        alert(errorMsg);
+        throw new Error(errorMsg);
+    }
+
+    return responseContent
+}

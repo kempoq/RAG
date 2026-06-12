@@ -1,13 +1,28 @@
-from pydantic import BaseModel, Field
+from typing import Self
+
+from fastapi import UploadFile
+from pydantic import BaseModel, Field, model_validator
 
 
-class GetDocumentsQuery(BaseModel):
-    ext: str = Field(max_length=4, default="txt")
+class AddDocumentsRequest(BaseModel):
+    files: list[UploadFile]
 
+    @model_validator(mode="after")
+    def check_files_constraints(self) -> Self:
+        for file in self.files:
+            if file.size > 50 * 1024 * 1024:
+                raise ValueError("File size must be less than 50 MB")
+            if file.filename.split(".")[-1] != "txt":
+                raise ValueError("Can process only txt files")
 
-class AddDocumentsRequest(GetDocumentsQuery): ...
+        return self
 
 
 class ChatRequest(BaseModel):
     query: str = Field(min_length=1)
     docs_count: int = Field(ge=3, default=3)
+
+
+class VectorDbInfo(BaseModel):
+    total_docs: int
+    embedding_model: str
