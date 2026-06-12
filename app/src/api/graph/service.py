@@ -2,6 +2,8 @@ import logging
 from typing import Any
 
 from app.src.api.graph.repository import GraphRagRepository
+from app.src.api.graph.schemas import ChatResponse
+from app.src.api.graph.utlis import extract_response_data
 from app.src.api.graph.workflow import WorkflowGraphFactory
 from app.src.core.ml_models import GigaChatClient
 
@@ -42,12 +44,13 @@ class GraphRagService:
 
         return graph_schema
 
-    def chat(self, query: str) -> dict[str, Any]:
+    def chat(self, query: str) -> ChatResponse:
         """Реализует логику графового RAG"""
 
         logger.info("Start Graph RAG workflow")
         workflow_graph = self._workflow_graph_factory.create_workflow()
-        answer = workflow_graph.invoke({"question": query})
+        workflow_state = workflow_graph.invoke({"question": query})
+        response = ChatResponse(**extract_response_data(workflow_state))
         logger.info("Answer is got")
 
-        return answer
+        return response

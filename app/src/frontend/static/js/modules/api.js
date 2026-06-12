@@ -18,10 +18,12 @@ export async function sendApiRequest(url, options) {
     else if (contentType.includes("json"))
         responseContent = await response.json();
     else
-        throw new Error("Not supported Content-Type header");
+        responseContent = await response.text();
 
     if (!response.ok) {
-        throw new Error(`Request to API is failed: ${response.status} - ${response.statusText}`)
+        const errorMsg = `Request to API is failed: ${response.status} - ${response.statusText}`;
+        alert(errorMsg);
+        throw new Error(errorMsg);
     }
 
     return responseContent

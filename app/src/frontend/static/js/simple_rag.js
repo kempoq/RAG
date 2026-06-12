@@ -1,28 +1,12 @@
 import { sendApiRequest } from "./modules/api.js"
-
-function showAnswer() {
-    document.getElementById("answerArea").classList.remove("hidden");
-}
-
-function hideAnswer() {
-    document.getElementById("answerArea").classList.add("hidden");
-}
-
-function fillAnswerOutput(answer) {
-    document.getElementById("answerOutput").innerHTML = marked.parse(answer);
-    renderMathInElement(document.getElementById("answerOutput"), {
-        delimiters: [
-            {left: "$$", right: "$$", display: true},
-            {left: "$", right: "$", display: false}
-        ],
-        throwOnError: false
-    });
-}
-
-function fillQueryOutput(query) {
-    document.getElementById("queryOutput").textContent = query;
-
-}
+import {
+    toggleContext,
+    showAnswer,
+    hideAnswer,
+    fillAnswerOutput,
+    fillQueryOutput,
+    clearInput
+} from "./modules/rag.js"
 
 function fillRelevantInfoOutput(relevantInfo) {
     const relevantInfoContainer = document.getElementById("relevantInfoOutput");
@@ -35,26 +19,8 @@ function fillRelevantInfoOutput(relevantInfo) {
     })
 }
 
-function clearInput() {
-    document.getElementById("userInput").value = "";
-}
-
 document.getElementById("toggleButton").addEventListener("click", () => {
-    const block = document.getElementById("augmented-query");
-    const label = document.getElementById("toggle-label");
-    const icon = document.getElementById("toggle-icon");
-    
-    if (block.classList.contains("hidden")) {
-        block.classList.remove("hidden");
-        label.textContent = "Hide augmented query";
-        icon.classList.remove("fa-chevron-down");
-        icon.classList.add("fa-chevron-up");
-    } else {
-        block.classList.add("hidden");
-        label.textContent = "Show augmented query";
-        icon.classList.remove("fa-chevron-up");
-        icon.classList.add("fa-chevron-down");
-    }
+    toggleContext("Show augmented query", "Hide augmented query");
 })
 
 document.getElementById("sendButton").addEventListener("click", async () => {

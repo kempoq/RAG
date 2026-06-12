@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAG App</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <script type="module" src="/static/js/graph_rag.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 <body class="bg-slate-50 h-screen flex flex-col overflow-hidden">
 
@@ -29,10 +36,10 @@
     </nav>
 
     <!-- Content + Input Wrapper -->
-    <div class="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <div class="flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 overflow-hidden">
 
         <!-- Scrollable Content Area -->
-        <div class="flex-1 overflow-y-auto py-6 space-y-4">
+        <div id="answerArea" class="flex-1 overflow-y-auto py-6 space-y-4 hidden">
 
             <!-- Answer Output -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
@@ -42,29 +49,22 @@
                     </div>
                     <h3 class="text-sm font-semibold text-slate-900">Answer</h3>
                 </div>
-                <div class="prose prose-slate prose-sm max-w-none">
-                    <p class="text-slate-700 leading-relaxed">
-                        Across your documents, the revenue drivers and pricing strategy are tightly interconnected. The <strong>Cloud Subscription</strong> growth (34% YoY) is anchored by the <strong>Enterprise tier</strong> pricing at $49/seat, which bundles the <strong>AI Add-on</strong> by default. This bundling creates a feedback loop: the AI module drives retention (94%), while the API access included in that tier expands the partner ecosystem. The Research Notes indicate this structure was intentionally designed to cross-sell between infrastructure and intelligence products.
-                    </p>
-                    <p class="text-slate-500 text-xs mt-4 pt-3 border-t border-slate-100">
-                        Sources: Annual_Report_2025.pdf, Product_Specs.docx, Research_Notes.txt
-                    </p>
-                </div>
+                <div id="answerOutput" class="prose prose-slate prose-sm max-w-none"></div>
             </div>
 
             <!-- Toggle Button -->
             <div class="flex justify-center">
                 <button 
-                    onclick="toggleGraphContext()" 
+                    id="toggleButton" 
                     class="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-medium text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm"
                 >
-                    <i id="toggle-icon" class="fa-solid fa-chevron-down text-xs transition-transform"></i>
-                    <span id="toggle-label">Show graph context</span>
+                    <i id="toggleIcon" class="fa-solid fa-chevron-down text-xs transition-transform"></i>
+                    <span id="toggleLabel">Show graph context</span>
                 </button>
             </div>
 
             <!-- Graph Context Block (Hidden by default) -->
-            <div id="graph-context" class="hidden bg-indigo-50/60 rounded-2xl border border-indigo-100 p-6 sm:p-8">
+            <div id="context" class="hidden bg-indigo-50/60 rounded-2xl border border-indigo-100 p-6 sm:p-8">
                 <div class="flex items-center gap-2 mb-4">
                     <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
                         <i class="fa-solid fa-circle-nodes text-indigo-600 text-sm"></i>
@@ -74,48 +74,38 @@
                 </div>
                 
                 <div class="space-y-3">
-                    <!-- Community Summaries -->
                     <div class="bg-white rounded-xl border border-indigo-100/80 p-4">
-                        <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">Community Summaries</p>
-                        <p class="text-sm text-slate-700 leading-relaxed">
-                            "...the revenue ecosystem is centrally driven by cloud subscriptions, which connect to enterprise licensing through the partner API network. The AI add-on acts as a bridge product between these two revenue streams, creating a unified pricing-to-retention loop..."
-                        </p>
-                        <p class="text-sm text-slate-700 leading-relaxed mt-2">
-                            "...cross-document analysis reveals that pricing strategy (Product_Specs) directly influences renewal rates (Annual_Report) through the Enterprise tier bundling, a pattern confirmed by internal research notes on product design..."
-                        </p>
+                        <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">Info from Neo4j</p>
+                        
+                        <!-- Truncated text (always visible) -->
+                        <p id="graphDbShortOutput" class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed"></p>
+                        
+                        <!-- Expand button -->
+                        <button 
+                            id="expandButton"
+                            class="mt-3 flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                        >
+                            <span>Show full summary</span>
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </button>
                     </div>
 
                     <!-- Retrieved Subgraph -->
                     <div class="bg-white rounded-xl border border-indigo-100/80 p-4">
-                        <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-3">Retrieved Subgraph</p>
-                        
-                        <div class="flex flex-wrap items-center gap-2 text-sm mb-2">
-                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-800 rounded-lg font-medium border border-indigo-100">Cloud Subscription</span>
-                            <i class="fa-solid fa-arrow-right text-indigo-300 text-xs"></i>
-                            <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">drives</span>
-                            <i class="fa-solid fa-arrow-right text-indigo-300 text-xs"></i>
-                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-800 rounded-lg font-medium border border-indigo-100">Revenue Growth</span>
-                        </div>
-
-                        <div class="flex flex-wrap items-center gap-2 text-sm">
-                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-800 rounded-lg font-medium border border-indigo-100">AI Add-on</span>
-                            <i class="fa-solid fa-arrow-right text-indigo-300 text-xs"></i>
-                            <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">bundled_in</span>
-                            <i class="fa-solid fa-arrow-right text-indigo-300 text-xs"></i>
-                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-800 rounded-lg font-medium border border-indigo-100">Enterprise Tier</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-center">
-                        <i class="fa-solid fa-arrow-down text-indigo-300 text-sm"></i>
+                        <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-3">Cypher query</p>
+                        <p id="cypherQueryOutput" class="text-sm text-slate-700 whitespace-pre-line leading-relaxed"></p>
                     </div>
 
                     <div class="bg-white rounded-xl border border-indigo-100/80 p-4">
                         <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">User Question</p>
-                        <p class="text-sm text-slate-800 font-medium">
-                            How do the revenue drivers connect to the pricing strategy across all documents?
-                        </p>
+                        <p id="queryOutput" class="text-sm text-slate-800 font-medium"></p>
                     </div>
+
+                    <div class="bg-white rounded-xl border border-indigo-100/80 p-4">
+                        <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">Token usage</p>
+                        <p id="tokenUsageOutput" class="text-sm text-slate-700 leading-relaxed"></p>
+                    </div>
+
                 </div>
             </div>
 
@@ -125,11 +115,15 @@
         <div class="shrink-0 bg-white border-t border-slate-200 py-4">
             <div class="flex gap-3">
                 <input 
+                    id="userInput"
                     type="text" 
-                    placeholder="Ask a question about your documents..." 
+                    placeholder="Ask a question ..." 
                     class="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
-                <button class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 py-3 text-sm font-medium transition-colors flex items-center gap-2 shrink-0">
+                <button
+                    id="sendButton"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 py-3 text-sm font-medium transition-colors flex items-center gap-2 shrink-0"
+                >
                     <span>Send</span>
                     <i class="fa-solid fa-paper-plane text-xs"></i>
                 </button>
@@ -138,25 +132,37 @@
 
     </div>
 
-    <script>
-        function toggleGraphContext() {
-            const block = document.getElementById('graph-context');
-            const label = document.getElementById('toggle-label');
-            const icon = document.getElementById('toggle-icon');
-            
-            if (block.classList.contains('hidden')) {
-                block.classList.remove('hidden');
-                label.textContent = 'Hide graph context';
-                icon.classList.remove('fa-chevron-down');
-                icon.classList.add('fa-chevron-up');
-            } else {
-                block.classList.add('hidden');
-                label.textContent = 'Show graph context';
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
-            }
-        }
-    </script>
-
+    <div id="communityModal" class="fixed inset-0 z-[100] hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        
+        <!-- Modal content -->
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <i class="fa-solid fa-circle-nodes text-indigo-600 text-sm"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-slate-900">Info from Neo4j — Full Text</h3>
+                    </div>
+                    <button
+                        id="modalCloseButton"
+                        class="text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                
+                <!-- Body -->
+                <div class="flex-1 overflow-y-auto px-6 py-5">
+                    <div class="space-y-4">
+                       <p id="graphDbFullOutput" class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

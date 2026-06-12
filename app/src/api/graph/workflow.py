@@ -177,18 +177,21 @@ class WorkflowGraphFactory:
         """Генерация ответа"""
 
         logger.info("Generating answer")
-        if raw_results := state["database_context"]["raw_results"]:
-            prompt = ChatPromptTemplate.from_messages(CHAT_PROMPT)
-            chain = prompt | RunnableLambda(self._llm.invoke)
-            response = chain.invoke(
-                {
-                    "question": state["question"],
-                    "context": str(raw_results),
-                }
-            )
-            answer = response.content
-        else:
-            answer = "В базе нет данных для ответа на этот вопрос."
+        raw_results = state["database_context"]["raw_results"]
+
+        prompt = ChatPromptTemplate.from_messages(CHAT_PROMPT)
+        chain = prompt | RunnableLambda(self._llm.invoke)
+        response = chain.invoke(
+            {
+                "question": state["question"],
+                "context": (
+                    str(raw_results)
+                    if raw_results
+                    else "В базе нет данных для ответа. Отвечай на основе своих знаний"
+                ),
+            }
+        )
+        answer = response.content
 
         state["message_history"].append(AIMessage(content=answer))
 
