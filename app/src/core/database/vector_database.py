@@ -15,6 +15,7 @@ def get_vector_store(request: Request) -> Chroma:
             collection_name=settings.chroma_collection_name,
             embedding_function=request.app.state.emb_model,
             persist_directory=settings.chroma_dir,
+            collection_metadata={"hnsw:space": "cosine"},
         )
     except Exception as e:
         raise VectoreDbError("Initialization failed", e)

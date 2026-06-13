@@ -67,6 +67,15 @@ class VectorRagService:
         logger.info("Documents are added")
         return ids
 
+    def get_documents(self, query: str, docs_count: int) -> list[str]:
+        """Возвращает документы, наиболее релевантные к запросу"""
+
+        docs = self._vs_repository.similarity_search_with_score(
+            query=query, k=docs_count
+        )
+
+        return [(doc.page_content, score) for doc, score in docs]
+
 
 class VectorRagChatService:
     def __init__(self, vector_store: Chroma, llm: GigaChatClient):

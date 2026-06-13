@@ -7,12 +7,13 @@ from app.src.api.vector.dependencies import VectorRagChatServiceDep, VectorRagSe
 from app.src.api.vector.schemas import (
     AddDocumentsRequest,
     ChatRequest,
+    GetDocumentsRequest,
 )
 
 vector_router = APIRouter(prefix="/vector", tags=["vector_rag"])
 
 
-@vector_router.get("/storage/docs")
+@vector_router.get("/storage/files")
 def get_downloaded_files(vectore_rag_service: VectorRagServiceDep):
     """Вывод загруженных файлов"""
 
@@ -57,6 +58,19 @@ def add_documents(
         )
 
     return response
+
+
+@vector_router.post("/storage/search")
+def get_similar_documents(
+    vectore_rag_service: VectorRagServiceDep, request_data: GetDocumentsRequest
+):
+    """Возвращает документы, наиболее релевантные к запросу"""
+
+    docs = vectore_rag_service.get_documents(
+        query=request_data.query, docs_count=request_data.docs_count
+    )
+
+    return {"docs": docs}
 
 
 @vector_router.post("/chat")

@@ -23,6 +23,9 @@ class ChatRequest(BaseModel):
     docs_count: int = Field(ge=3, default=3)
 
 
+class GetDocumentsRequest(ChatRequest): ...
+
+
 class VectorDbInfo(BaseModel):
     total_docs: int
     embedding_model: str

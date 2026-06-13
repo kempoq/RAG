@@ -3,7 +3,7 @@ from typing import Any
 
 from app.src.api.graph.repository import GraphRagRepository
 from app.src.api.graph.schemas import ChatResponse
-from app.src.api.graph.utlis import extract_response_data
+from app.src.api.graph.utils import extract_response_data
 from app.src.api.graph.workflow import WorkflowGraphFactory
 from app.src.core.ml_models import GigaChatClient
 

@@ -30,7 +30,7 @@ function renderEmbeddedFiles(filesList, filesInfo) {
 }
 
 async function fillFilesList() {
-    const filesInfo = await sendApiRequest("/api/v1/vector/storage/docs", { method: "GET" });
+    const filesInfo = await sendApiRequest("/api/v1/vector/storage/files", { method: "GET" });
     const filesList = document.getElementById("documentsList");
     filesList.lastElementChild.classList.add("hidden");
 

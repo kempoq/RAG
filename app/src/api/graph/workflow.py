@@ -15,7 +15,7 @@ from app.src.api.graph.constants import (
     GENERATE_CYPHER_QUERY,
 )
 from app.src.api.graph.repository import GraphRagRepository
-from app.src.api.graph.utlis import extract_cypher_from_markdown
+from app.src.api.graph.utils import extract_cypher_from_markdown
 from app.src.core.exceptions import WorkflowGenerationError
 from app.src.core.ml_models import GigaChatClient
 

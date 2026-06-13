@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     chunk_size: int = 1000
     chunk_overlap: int = 200
     embedding_base_url: str = "http://127.0.0.1:1234/v1"
-    embedding_model_name: str = "text-embedding-nomic-embed-text-v1.5"
+    embedding_model_name: str = "text-embedding-bge-m3"
     static_dir: str = "app/src/frontend/static"
     templates_dir: str = "app/src/frontend/templates"
 
