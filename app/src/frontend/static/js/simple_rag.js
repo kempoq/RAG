@@ -7,6 +7,7 @@ import {
     fillQueryOutput,
     clearInput
 } from "./modules/rag.js"
+import { showLoader, hideLoader } from "./modules/loader.js";
 
 function fillRelevantInfoOutput(relevantInfo) {
     const relevantInfoContainer = document.getElementById("relevantInfoOutput");
@@ -29,6 +30,7 @@ document.getElementById("sendButton").addEventListener("click", async () => {
     const query = document.getElementById("userInput").value;
     if (query.length === 0) return;
 
+    showLoader("Processing", "Generating answer");
     const response = await sendApiRequest("/api/v1/vector/chat", {
         method: "POST",
         headers: {
@@ -42,4 +44,5 @@ document.getElementById("sendButton").addEventListener("click", async () => {
     fillRelevantInfoOutput(response["relevant_info"]);
     showAnswer();
     clearInput();
+    hideLoader();
 })

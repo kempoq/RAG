@@ -1,4 +1,5 @@
 import { sendApiRequest } from "./modules/api.js";
+import { showLoader, hideLoader } from "./modules/loader.js";
 
 let selectedFiles = [];
 
@@ -156,6 +157,7 @@ function clearSelectedFiles() {
 document.getElementById("uploadButton").addEventListener("click", async () => {
     if (selectedFiles.length === 0) return;
 
+    showLoader("Processing", "Embedding files and saving to ChromaDB");
     const formData = new FormData();
     selectedFiles.forEach(f => formData.append("files", f));
 
@@ -164,6 +166,7 @@ document.getElementById("uploadButton").addEventListener("click", async () => {
         body: formData
     });
     clearSelectedFiles();
+    hideLoader();
 });
 
 await fillFilesList();

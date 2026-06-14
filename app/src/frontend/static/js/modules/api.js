@@ -1,3 +1,5 @@
+import { hideLoader } from "./loader.js";
+
 function convertBodyToString(options) {
     if (typeof options["body"] !== "string")
         options["body"] = JSON.stringify(options["body"]);
@@ -23,6 +25,7 @@ export async function sendApiRequest(url, options) {
     if (!response.ok) {
         const errorMsg = `Request to API is failed: ${response.status} - ${response.statusText}`;
         alert(errorMsg);
+        hideLoader();
         throw new Error(errorMsg);
     }
 

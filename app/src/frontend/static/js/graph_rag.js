@@ -7,6 +7,7 @@ import {
     fillQueryOutput,
     clearInput
 } from "./modules/rag.js";
+import { showLoader, hideLoader } from "./modules/loader.js";
 
 function openCommunityModal() {
     document.getElementById("communityModal").classList.remove("hidden");
@@ -63,6 +64,7 @@ document.getElementById("sendButton").addEventListener("click", async () => {
     const query = document.getElementById("userInput").value;
     if (query.length === 0) return;
 
+    showLoader("Processing", "Generating answer");
     const response = await sendApiRequest("/api/v1/graph/chat", {
         method: "POST",
         headers: {
@@ -80,4 +82,5 @@ document.getElementById("sendButton").addEventListener("click", async () => {
     fillTokenUsageOutput(response["token_usage"]);
     showAnswer();
     clearInput();
+    hideLoader();
 })
