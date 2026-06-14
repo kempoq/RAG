@@ -24,7 +24,6 @@ class EnvSettings(BaseSettings):
     neo4j_user: str
     neo4j_password: SecretStr
     neo4j_database: str
-    openai_api_key: str
     embedding_model_api_key: str
     giga_auth_token: str
 
