@@ -5,6 +5,7 @@ import {
     hideAnswer,
     fillAnswerOutput,
     fillQueryOutput,
+    fillRelevantInfoOutput,
     clearInput
 } from "./modules/rag.js";
 import { showLoader, hideLoader } from "./modules/loader.js";
@@ -73,10 +74,9 @@ document.getElementById("sendButton").addEventListener("click", async () => {
         body: {"query": query}
     });
 
-    console.log(response);
-
     fillAnswerOutput(response["answer"]);
     fillQueryOutput(response["user_query"]);
+    fillRelevantInfoOutput(response["vector_db_info"]);
     fillCypherQueryOutput(response["cypher_query"]);
     fillGraphDbInfoOutput(response["graph_db_info"]);
     fillTokenUsageOutput(response["token_usage"]);

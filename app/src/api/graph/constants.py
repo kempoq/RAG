@@ -70,5 +70,14 @@ FIX_CYPHER_QUERY: list[tuple[str]] = [
 
 CHAT_PROMPT: list[tuple[str]] = [
     ("system", "Ответь на вопрос пользователя на основе предоставленных данных."),
-    ("human", "Вопрос: {question}\nДанные из базы (в формате JSON): {context}"),
+    (
+        "human",
+        """
+Вопрос: {question}
+Данные из графовой базы в формате JSON (связи):
+{graph_context}
+Данные из векторной базы (доп. контекст):
+{vector_context}
+        """,
+    ),
 ]

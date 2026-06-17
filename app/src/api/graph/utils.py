@@ -23,6 +23,7 @@ def extract_response_data(workflow_state: dict[str, Any]) -> dict[str, Any]:
         "answer": workflow_state["answer"],
         "cypher_query": workflow_state["database_context"]["cypher_query"],
         "graph_db_info": workflow_state["database_context"]["raw_results"],
+        "vector_db_info": workflow_state["vector_db_info"],
         "token_usage": 0,
     }
 

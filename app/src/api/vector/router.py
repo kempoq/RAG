@@ -3,7 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Form
 from fastapi.responses import JSONResponse
 
-from app.src.api.vector.dependencies import VectorRagChatServiceDep, VectorRagServiceDep
+from app.src.api.vector.dependencies import (
+    VectorRagChatServiceDep,
+    VectorRagStorageServiceDep,
+)
 from app.src.api.vector.schemas import (
     AddDocumentsRequest,
     ChatRequest,
@@ -14,7 +17,7 @@ vector_router = APIRouter(prefix="/vector", tags=["vector_rag"])
 
 
 @vector_router.get("/storage/files")
-def get_downloaded_files(vectore_rag_service: VectorRagServiceDep):
+def get_downloaded_files(vectore_rag_service: VectorRagStorageServiceDep):
     """Вывод загруженных файлов"""
 
     files = vectore_rag_service.get_downloaded_files()
@@ -23,7 +26,7 @@ def get_downloaded_files(vectore_rag_service: VectorRagServiceDep):
 
 
 @vector_router.get("/storage/info")
-def get_storage_info(vectore_rag_service: VectorRagServiceDep):
+def get_storage_info(vectore_rag_service: VectorRagStorageServiceDep):
     storage_info = vectore_rag_service.get_info()
 
     return storage_info
@@ -31,7 +34,7 @@ def get_storage_info(vectore_rag_service: VectorRagServiceDep):
 
 @vector_router.post("/storage/docs")
 def add_documents(
-    vectore_rag_service: VectorRagServiceDep,
+    vectore_rag_service: VectorRagStorageServiceDep,
     request_data: Annotated[
         AddDocumentsRequest, Form(..., media_type="multipart/form-data")
     ],
@@ -62,7 +65,7 @@ def add_documents(
 
 @vector_router.post("/storage/search")
 def get_similar_documents(
-    vectore_rag_service: VectorRagServiceDep, request_data: GetDocumentsRequest
+    vectore_rag_service: VectorRagStorageServiceDep, request_data: GetDocumentsRequest
 ):
     """Возвращает документы, наиболее релевантные к запросу"""
 

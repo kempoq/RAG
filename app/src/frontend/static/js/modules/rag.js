@@ -35,6 +35,17 @@ export function fillAnswerOutput(answer) {
     });
 }
 
+export function fillRelevantInfoOutput(relevantInfo) {
+    const relevantInfoContainer = document.getElementById("relevantInfoOutput");
+
+    relevantInfo.forEach(ri => {
+        const riString = document.createElement("p");
+        riString.classList.add("text-sm", "text-slate-700", "leading-relaxed", "mt-2");
+        riString.textContent = ri;
+        relevantInfoContainer.appendChild(riString);
+    })
+}
+
 export function fillQueryOutput(query) {
     document.getElementById("queryOutput").textContent = query;
 }

@@ -5,20 +5,10 @@ import {
     hideAnswer,
     fillAnswerOutput,
     fillQueryOutput,
+    fillRelevantInfoOutput,
     clearInput
 } from "./modules/rag.js"
 import { showLoader, hideLoader } from "./modules/loader.js";
-
-function fillRelevantInfoOutput(relevantInfo) {
-    const relevantInfoContainer = document.getElementById("relevantInfoOutput");
-
-    relevantInfo.forEach(ri => {
-        const riString = document.createElement("p");
-        riString.classList.add("text-sm", "text-slate-700", "leading-relaxed", "mt-2");
-        riString.textContent = ri;
-        relevantInfoContainer.appendChild(riString);
-    })
-}
 
 document.getElementById("toggleButton").addEventListener("click", () => {
     toggleContext("Show augmented query", "Hide augmented query");

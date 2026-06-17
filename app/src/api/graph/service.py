@@ -14,14 +14,12 @@ class GraphRagService:
     def __init__(
         self,
         graph_rag_repository: GraphRagRepository,
+        workflow_factory: WorkflowGraphFactory,
         llm: GigaChatClient,
-        max_fix_retries: int = 2,
     ) -> None:
         self._gs_repository = graph_rag_repository
         self._llm = llm
-        self._workflow_graph_factory = WorkflowGraphFactory(
-            graph_rag_repository, llm, max_fix_retries
-        )
+        self._workflow_factory = workflow_factory
 
     def get_stats(self) -> dict[str, Any]:
         """Возвращает статистику по графу"""
@@ -48,7 +46,7 @@ class GraphRagService:
         """Реализует логику графового RAG"""
 
         logger.info("Start Graph RAG workflow")
-        workflow_graph = self._workflow_graph_factory.create_workflow()
+        workflow_graph = self._workflow_factory.create_workflow()
         workflow_state = workflow_graph.invoke({"question": query})
         response = ChatResponse(**extract_response_data(workflow_state))
         logger.info("Answer is got")

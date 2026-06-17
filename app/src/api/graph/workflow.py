@@ -16,6 +16,7 @@ from app.src.api.graph.constants import (
 )
 from app.src.api.graph.repository import GraphRagRepository
 from app.src.api.graph.utils import extract_cypher_from_markdown
+from app.src.api.vector.service import VectorRagStorageService
 from app.src.core.exceptions import WorkflowGenerationError
 from app.src.core.ml_models import GigaChatClient
 
@@ -40,6 +41,7 @@ class GraphState(TypedDict):
     question: str
     cypher_context: CypherContext
     database_context: DatabaseContext
+    vector_db_info: list[str]
     message_history: list[BaseMessage]
     answer: str | None
 
@@ -48,10 +50,12 @@ class WorkflowGraphFactory:
     def __init__(
         self,
         graph_rag_repository: GraphRagRepository,
+        vector_rag_storage_service: VectorRagStorageService,
         llm: GigaChatClient,
         max_fix_retries: int,
     ) -> None:
         self._gr_repository = graph_rag_repository
+        self._vector_rag_storage_service = vector_rag_storage_service
         self._llm = llm
         self._max_fix_retries = max_fix_retries
 
@@ -75,9 +79,22 @@ class WorkflowGraphFactory:
                 "warnings": [],
                 "retry_count": 0,
             },
+            "vector_db_info": [],
             "message_history": [HumanMessage(content=state["question"])],
             "answer": None,
         }
+
+    def _retrieve_relevant_info_from_vdb(self, state: GraphState) -> GraphState:
+        """Получение топ n релевантных к запросу пользователя документов из векторной БД"""
+
+        logger.info("Getting relevant info from VDB")
+        docs_with_score = self._vector_rag_storage_service.get_documents(
+            query=state["question"], docs_count=3
+        )
+        docs_content = [doc_with_score[0] for doc_with_score in docs_with_score]
+        state["vector_db_info"].extend(docs_content)
+
+        return state
 
     def _generate_cypher_query(self, state: GraphState) -> GraphState:
         """Генерация Cypher запроса"""
@@ -178,16 +195,22 @@ class WorkflowGraphFactory:
 
         logger.info("Generating answer")
         raw_results = state["database_context"]["raw_results"]
+        vector_db_info = state["vector_db_info"]
 
         prompt = ChatPromptTemplate.from_messages(CHAT_PROMPT)
         chain = prompt | RunnableLambda(self._llm.invoke)
         response = chain.invoke(
             {
                 "question": state["question"],
-                "context": (
+                "graph_context": (
                     str(raw_results)
                     if raw_results
-                    else "В базе нет данных для ответа. Отвечай на основе своих знаний"
+                    else "В базе нет информации о связях"
+                ),
+                "vector_context": (
+                    "\n".join(vector_db_info)
+                    if vector_db_info
+                    else "В базе нет доп. контекста.\nОтвечай на основе своих знаний."
                 ),
             }
         )
@@ -216,20 +239,24 @@ class WorkflowGraphFactory:
                 logger.debug("There are errors/warnings. Go to generate_cypher_query")
                 return "retry"
             else:
-                logger.debug("Retry count reached limit. Workflow go to end")
+                logger.debug(
+                    "Retry count reached limit. Go to generating answer without info from GDB"
+                )
                 return "failed"
 
         logger.debug("Start generating and compiling workflow for GraphRAG")
         workflow = StateGraph(state_schema=GraphState)
 
         workflow.add_node("init_context", self._init_context)
+        workflow.add_node("retrieve_info", self._retrieve_relevant_info_from_vdb)
         workflow.add_node("generate_cypher_query", self._generate_cypher_query)
         workflow.add_node("check_query", self._check_query)
         workflow.add_node("execute_query", self._execute_query)
         workflow.add_node("generate_answer", self._generate_answer)
 
         workflow.set_entry_point("init_context")
-        workflow.add_edge("init_context", "generate_cypher_query")
+        workflow.add_edge("init_context", "retrieve_info")
+        workflow.add_edge("retrieve_info", "generate_cypher_query")
         workflow.add_edge("generate_cypher_query", "check_query")
         workflow.add_conditional_edges(
             "check_query",
@@ -237,7 +264,7 @@ class WorkflowGraphFactory:
             {
                 "success": "execute_query",
                 "retry": "generate_cypher_query",
-                "failed": END,
+                "failed": "generate_answer",
             },
         )
         workflow.add_edge("execute_query", "generate_answer")

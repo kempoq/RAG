@@ -9,7 +9,8 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     user_query: str
-    answer: str
+    answer: str | None
     cypher_query: str
     graph_db_info: list[dict[str, Any]]
     token_usage: int
+    vector_db_info: list[str]

@@ -12,7 +12,7 @@ from app.src.core.ml_models import GigaChatClient
 logger = logging.getLogger(__name__)
 
 
-class VectorRagService:
+class VectorRagStorageService:
     def __init__(
         self, documents_service: DocumentsService, vector_store: Chroma
     ) -> None:
@@ -67,7 +67,7 @@ class VectorRagService:
         logger.info("Documents are added")
         return ids
 
-    def get_documents(self, query: str, docs_count: int) -> list[str]:
+    def get_documents(self, query: str, docs_count: int) -> list[tuple[str, float]]:
         """Возвращает документы, наиболее релевантные к запросу"""
 
         docs = self._vs_repository.similarity_search_with_score(
