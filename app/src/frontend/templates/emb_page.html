@@ -60,10 +60,10 @@
                         <p class="text-xs text-slate-400 mt-2">TXT — up to 50MB each</p>
                     </div>
 
-                    <input type="file" id="file-input" multiple accept=".pdf,.txt,.docx,.md" class="hidden">
+                    <input type="file" id="file-input" multiple accept=".txt" class="hidden">
 
                     <!-- Selected Files List (appears inside upload card) -->
-                    <div id="selected-files" class="hidden mt-4 space-y-2"></div>
+                    <div id="selected-files" class="hidden mt-4 space-y-2 max-h-48 overflow-y-auto pr-1"></div>
 
                     <!-- Upload Button -->
                     <div id="upload-action" class="hidden mt-4">
