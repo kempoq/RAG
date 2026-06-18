@@ -82,7 +82,9 @@ class VectorRagChatService:
         self._vs_repository = vector_store
         self._llm = llm
 
-    def chat(self, query: str, docs_count: int = 3) -> tuple[str, list[str]]:
+    def chat(
+        self, query: str, temperature: float, docs_count: int
+    ) -> tuple[str, list[str]]:
         """
         Реализует логику RAG: отправляет запрос, дополненный данными из векторной БД, в LLM.
         Далее возвращает ответ
@@ -97,7 +99,12 @@ class VectorRagChatService:
             relevant_information="\n".join(relevant_docs_content),
         )
 
-        answer = self._llm.invoke(augmented_query).content
+        if temperature != 0.0:
+            answer = self._llm.get_model_with_new_settings(
+                temperature=temperature
+            ).invoke(augmented_query)
+        else:
+            answer = self._llm.invoke(augmented_query)
 
         logger.info("Answer is got")
-        return answer, relevant_docs_content
+        return answer.content, relevant_docs_content

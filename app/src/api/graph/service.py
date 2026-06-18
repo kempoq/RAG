@@ -42,12 +42,18 @@ class GraphRagService:
 
         return graph_schema
 
-    def chat(self, query: str) -> ChatResponse:
+    def chat(self, query: str, temperature: float, docs_count: int) -> ChatResponse:
         """Реализует логику графового RAG"""
 
         logger.info("Start Graph RAG workflow")
         workflow_graph = self._workflow_factory.create_workflow()
-        workflow_state = workflow_graph.invoke({"question": query})
+        workflow_state = workflow_graph.invoke(
+            {
+                "question": query,
+                "vector_db_context": {"docs_count": docs_count},
+                "chat_llm_settings": {"temperature": temperature},
+            }
+        )
         response = ChatResponse(**extract_response_data(workflow_state))
         logger.info("Answer is got")
 

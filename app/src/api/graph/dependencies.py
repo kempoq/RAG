@@ -13,7 +13,11 @@ def get_graph_rag_service(
 ) -> GraphRagService:
     graph_rag_repository = GraphRagRepository(graph_db_conn=request.app.state.graph_db)
     workflow_factory = WorkflowGraphFactory(
-        graph_rag_repository, vector_rag_storage_service, request.app.state.llm, 2
+        graph_rag_repository=graph_rag_repository,
+        vector_rag_storage_service=vector_rag_storage_service,
+        chat_llm=request.app.state.llm,
+        cypher_generating_llm=request.app.state.llm,
+        max_fix_retries=2,
     )
 
     return GraphRagService(

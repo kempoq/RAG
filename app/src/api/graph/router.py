@@ -30,6 +30,10 @@ def chat(
 ) -> ChatResponse:
     """Запрос к LLM (графовый RAG)"""
 
-    response = graph_rag_service.chat(query=request_data.query)
+    response = graph_rag_service.chat(
+        query=request_data.query,
+        temperature=request_data.temperature,
+        docs_count=request_data.docs_count,
+    )
 
     return response

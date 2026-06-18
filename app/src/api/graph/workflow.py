@@ -15,7 +15,7 @@ from app.src.api.graph.constants import (
     GENERATE_CYPHER_QUERY,
 )
 from app.src.api.graph.repository import GraphRagRepository
-from app.src.api.graph.utils import extract_cypher_from_markdown
+from app.src.api.graph.utils import extract_cypher_from_markdown, merge_dicts_one_deep
 from app.src.api.vector.service import VectorRagStorageService
 from app.src.core.exceptions import WorkflowGenerationError
 from app.src.core.ml_models import GigaChatClient
@@ -29,7 +29,7 @@ class CypherContext(TypedDict):
     question: str
 
 
-class DatabaseContext(TypedDict):
+class GraphDBContext(TypedDict):
     cypher_query: str | None
     raw_results: list[dict[str, Any]]
     errors: list[str]
@@ -37,11 +37,21 @@ class DatabaseContext(TypedDict):
     retry_count: int
 
 
+class VectorDBContext(TypedDict):
+    docs_count: int
+    relevant_data: list[str]
+
+
+class ChatLLMSettings(TypedDict):
+    temperature: float
+
+
 class GraphState(TypedDict):
     question: str
     cypher_context: CypherContext
-    database_context: DatabaseContext
-    vector_db_info: list[str]
+    graph_db_context: GraphDBContext
+    vector_db_context: VectorDBContext
+    chat_llm_settings: ChatLLMSettings
     message_history: list[BaseMessage]
     answer: str | None
 
@@ -51,12 +61,14 @@ class WorkflowGraphFactory:
         self,
         graph_rag_repository: GraphRagRepository,
         vector_rag_storage_service: VectorRagStorageService,
-        llm: GigaChatClient,
+        chat_llm: GigaChatClient,
+        cypher_generating_llm: GigaChatClient,
         max_fix_retries: int,
     ) -> None:
         self._gr_repository = graph_rag_repository
         self._vector_rag_storage_service = vector_rag_storage_service
-        self._llm = llm
+        self._chat_llm = chat_llm
+        self._cypher_generating_llm = cypher_generating_llm
         self._max_fix_retries = max_fix_retries
 
     def _init_context(self, state: GraphState) -> GraphState:
@@ -65,34 +77,41 @@ class WorkflowGraphFactory:
         logger.info("Initializing context")
         graph_schema = self._gr_repository.get_graph_schema()
 
-        return {
-            **state,
+        default_state = {
+            "question": "Привет",
             "cypher_context": {
                 "schema": graph_schema,
                 "examples": EXAMPLES,
                 "question": state["question"],
             },
-            "database_context": {
+            "graph_db_context": {
                 "cypher_query": None,
                 "raw_results": [],
                 "errors": [],
                 "warnings": [],
                 "retry_count": 0,
             },
-            "vector_db_info": [],
+            "vector_db_context": {
+                "docs_count": 3,
+                "relevant_data": [],
+            },
+            "chat_llm_settings": {"temperature": 0.0},
             "message_history": [HumanMessage(content=state["question"])],
             "answer": None,
         }
+        result_state = merge_dicts_one_deep(default_state, state)
+
+        return result_state
 
     def _retrieve_relevant_info_from_vdb(self, state: GraphState) -> GraphState:
         """Получение топ n релевантных к запросу пользователя документов из векторной БД"""
 
         logger.info("Getting relevant info from VDB")
         docs_with_score = self._vector_rag_storage_service.get_documents(
-            query=state["question"], docs_count=3
+            query=state["question"], docs_count=state["vector_db_context"]["docs_count"]
         )
         docs_content = [doc_with_score[0] for doc_with_score in docs_with_score]
-        state["vector_db_info"].extend(docs_content)
+        state["vector_db_context"]["relevant_data"].extend(docs_content)
 
         return state
 
@@ -100,11 +119,11 @@ class WorkflowGraphFactory:
         """Генерация Cypher запроса"""
 
         logger.info("Generating Cypher Query")
-        db_ctx = state["database_context"]
+        db_ctx = state["graph_db_context"]
 
         if len(db_ctx["errors"]) != 0 or len(db_ctx["warnings"]) != 0:
             prompt = ChatPromptTemplate.from_messages(FIX_CYPHER_QUERY)
-            chain = prompt | RunnableLambda(self._llm.invoke)
+            chain = prompt | RunnableLambda(self._cypher_generating_llm.invoke)
             response = chain.invoke(
                 {
                     "schema": state["cypher_context"]["schema"],
@@ -119,7 +138,7 @@ class WorkflowGraphFactory:
             db_ctx["warnings"].clear()
         else:
             prompt = ChatPromptTemplate.from_messages(GENERATE_CYPHER_QUERY)
-            chain = prompt | RunnableLambda(self._llm.invoke)
+            chain = prompt | RunnableLambda(self._cypher_generating_llm.invoke)
             response = chain.invoke(
                 {
                     "schema": state["cypher_context"]["schema"],
@@ -135,14 +154,14 @@ class WorkflowGraphFactory:
 
         return {
             **state,
-            "database_context": db_ctx,
+            "graph_db_context": db_ctx,
         }
 
     def _check_query(self, state: GraphState) -> GraphState:
         """Проверка правильности синтаксиса"""
 
         logger.info("Making query syntax check")
-        db_ctx = state["database_context"]
+        db_ctx = state["graph_db_context"]
 
         try:
             warnings = self._gr_repository.check_query(db_ctx["cypher_query"])
@@ -165,14 +184,14 @@ class WorkflowGraphFactory:
 
         return {
             **state,
-            "database_context": db_ctx,
+            "graph_db_context": db_ctx,
         }
 
     def _execute_query(self, state: GraphState) -> GraphState:
         """Выполнение Cypher запроса"""
 
         logger.info("Executing Cypher query")
-        db_ctx = state["database_context"]
+        db_ctx = state["graph_db_context"]
 
         try:
             results = self._gr_repository.graph_db_conn.query(db_ctx["cypher_query"])
@@ -187,24 +206,28 @@ class WorkflowGraphFactory:
 
         return {
             **state,
-            "database_context": db_ctx,
+            "graph_db_context": db_ctx,
         }
 
     def _generate_answer(self, state: GraphState) -> GraphState:
         """Генерация ответа"""
 
         logger.info("Generating answer")
-        raw_results = state["database_context"]["raw_results"]
-        vector_db_info = state["vector_db_info"]
+        graph_db_info = state["graph_db_context"]["raw_results"]
+        vector_db_info = state["vector_db_context"]["relevant_data"]
 
         prompt = ChatPromptTemplate.from_messages(CHAT_PROMPT)
-        chain = prompt | RunnableLambda(self._llm.invoke)
+        chain = prompt | RunnableLambda(
+            self._chat_llm.get_model_with_new_settings(
+                **state["chat_llm_settings"]
+            ).invoke
+        )
         response = chain.invoke(
             {
                 "question": state["question"],
                 "graph_context": (
-                    str(raw_results)
-                    if raw_results
+                    str(graph_db_info)
+                    if graph_db_info
                     else "В базе нет информации о связях"
                 ),
                 "vector_context": (
@@ -230,12 +253,12 @@ class WorkflowGraphFactory:
             """Возвращает статус, на основе которого будет определено дальнейшее движении по графу"""
 
             if (
-                not state["database_context"]["errors"]
-                and not state["database_context"]["warnings"]
+                not state["graph_db_context"]["errors"]
+                and not state["graph_db_context"]["warnings"]
             ):
                 logger.debug("There are no errors/warnings. Going forward")
                 return "success"
-            elif state["database_context"]["retry_count"] < self._max_fix_retries:
+            elif state["graph_db_context"]["retry_count"] < self._max_fix_retries:
                 logger.debug("There are errors/warnings. Go to generate_cypher_query")
                 return "retry"
             else:

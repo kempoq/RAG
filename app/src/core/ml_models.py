@@ -3,6 +3,7 @@ from typing import Any
 
 import requests
 from gigachat.exceptions import AuthenticationError
+from langchain_core.language_models.chat_models import _ChatModelBinding
 from langchain_core.messages import AIMessage
 from langchain_gigachat.chat_models import GigaChat
 
@@ -81,17 +82,29 @@ class GigaChatClient:
             model=self._model,
             access_token=self._access_token,
             verify_ssl_certs=self._verify_ssl,
-            temperature=0,
+            temperature=0.0,
         )
 
-    def invoke(self, *args: list[Any], **kwargs: dict[Any, Any]) -> AIMessage:
+    def get_model_with_new_settings(
+        self, **kwargs: dict[str, Any]
+    ) -> _ChatModelBinding:
+        """Устанавливает параметры модели. Обертка над методом GigaChat.bind(...)"""
+
+        logger.debug(
+            f"Returning model with params: {', '.join([f'{k}={v}' for k, v in kwargs.items()])}"
+        )
+        return self._client.bind(**kwargs)
+
+    def invoke(self, *args: list[Any], **kwargs: dict[str, Any]) -> AIMessage:
+        """Отправляет запрос к LLM"""
+
         retry_count = 0
 
         while True:
             try:
                 return self._client.invoke(*args, **kwargs)
             except AuthenticationError as ae:
-                logger.info("Access token is probably expired, trying to refresh it")
+                logger.info("Access token is expired, trying to refresh it")
                 if retry_count == self._max_auth_retries:
                     raise ae
                 self._set_access_token()

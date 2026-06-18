@@ -21,6 +21,7 @@ class AddDocumentsRequest(BaseModel):
 class ChatRequest(BaseModel):
     query: str = Field(min_length=1)
     docs_count: int = Field(ge=3, default=3)
+    temperature: float = Field(ge=0.0, le=2.0)
 
 
 class GetDocumentsRequest(ChatRequest): ...
