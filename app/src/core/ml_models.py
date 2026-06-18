@@ -8,7 +8,7 @@ from langchain_core.messages import AIMessage
 from langchain_gigachat.chat_models import GigaChat
 
 # from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from app.src.core.config import env_settings, settings
 
@@ -113,7 +113,26 @@ class GigaChatClient:
                 retry_count += 1
 
 
-def get_llm() -> GigaChatClient:
-    """Возвращает клиент для взаимодействия с LLM моделью"""
+def get_gigachat_client() -> GigaChatClient:
+    """Возвращает клиент для взаимодействия с GigaChat"""
 
-    return GigaChatClient(model=settings.llm_model)
+    logger.info("Start initializing GigaChat client")
+    giga_client = GigaChatClient(model=settings.chat_llm_model)
+    logger.info("GigaChat client is initialized")
+
+    return giga_client
+
+
+def get_openai_llm_client() -> ChatOpenAI:
+    """Возвращает клиент для взаимодействия с LLM с API стандарта OpenAI"""
+
+    logger.info("Start initializing OpenAI based LLM client")
+    llm = ChatOpenAI(
+        model=settings.cypher_llm_model,
+        base_url=settings.cypher_llm_base_url,
+        api_key=env_settings.groq_api_key,
+        temperature=0,
+    )
+    logger.info("LLM client is initialized")
+
+    return llm

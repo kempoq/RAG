@@ -18,7 +18,9 @@ def get_vector_rag_storage_service(
 def get_vector_rag_chat_service(
     request: Request, vector_store: VectorStoreDep
 ) -> VectorRagChatService:
-    return VectorRagChatService(vector_store=vector_store, llm=request.app.state.llm)
+    return VectorRagChatService(
+        vector_store=vector_store, llm=request.app.state.chat_llm
+    )
 
 
 VectorRagStorageServiceDep = Annotated[

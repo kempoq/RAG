@@ -6,8 +6,9 @@ from app.src.api import api
 from app.src.core import (
     configure_logging,
     get_embedding_model_api,
+    get_gigachat_client,
     get_graph,
-    get_llm,
+    get_openai_llm_client,
     load_graph,
 )
 from app.src.frontend import frontend
@@ -20,7 +21,8 @@ async def lifespan(_app: FastAPI):
 
     api.state.emb_model = get_embedding_model_api()
     api.state.graph_db = get_graph()
-    api.state.llm = get_llm()
+    api.state.chat_llm = get_gigachat_client()
+    api.state.cypher_llm = get_openai_llm_client()
 
     load_graph(api.state.graph_db)
 

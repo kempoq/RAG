@@ -15,15 +15,15 @@ def get_graph_rag_service(
     workflow_factory = WorkflowGraphFactory(
         graph_rag_repository=graph_rag_repository,
         vector_rag_storage_service=vector_rag_storage_service,
-        chat_llm=request.app.state.llm,
-        cypher_generating_llm=request.app.state.llm,
+        chat_llm=request.app.state.chat_llm,
+        cypher_generating_llm=request.app.state.cypher_llm,
         max_fix_retries=2,
     )
 
     return GraphRagService(
         graph_rag_repository=graph_rag_repository,
         workflow_factory=workflow_factory,
-        llm=request.app.state.llm,
+        llm=request.app.state.chat_llm,
     )
 
 

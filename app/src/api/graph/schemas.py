@@ -14,5 +14,5 @@ class ChatResponse(BaseModel):
     answer: str | None
     cypher_query: str
     graph_db_info: list[dict[str, Any]]
-    token_usage: int
+    token_usage: dict[str, int]
     vector_db_info: list[str]

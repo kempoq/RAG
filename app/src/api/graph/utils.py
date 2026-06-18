@@ -24,7 +24,7 @@ def extract_response_data(workflow_state: dict[str, Any]) -> dict[str, Any]:
         "cypher_query": workflow_state["graph_db_context"]["cypher_query"],
         "graph_db_info": workflow_state["graph_db_context"]["raw_results"],
         "vector_db_info": workflow_state["vector_db_context"]["relevant_data"],
-        "token_usage": 0,
+        "token_usage": {},
     }
 
     for message in workflow_state["message_history"]:
@@ -34,8 +34,13 @@ def extract_response_data(workflow_state: dict[str, Any]) -> dict[str, Any]:
             continue
 
         if response_metadata := message.response_metadata:
-            if token_usage := response_metadata.get("token_usage"):
-                res["token_usage"] += token_usage.get("total_tokens", 0)
+            model_name = response_metadata.get("model_name", "Модель xxx")
+            token_usage = response_metadata.get("token_usage", {"total_tokens": -1})
+
+            if model_name in res["token_usage"]:
+                res["token_usage"][model_name] += token_usage.get("total_tokens", 0)
+            else:
+                res["token_usage"][model_name] = token_usage.get("total_tokens", 0)
 
     return res
 

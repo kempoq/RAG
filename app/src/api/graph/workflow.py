@@ -4,6 +4,7 @@ from typing import Any, TypedDict
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
+from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from neo4j.exceptions import CypherSyntaxError, Neo4jError
@@ -61,8 +62,8 @@ class WorkflowGraphFactory:
         self,
         graph_rag_repository: GraphRagRepository,
         vector_rag_storage_service: VectorRagStorageService,
-        chat_llm: GigaChatClient,
-        cypher_generating_llm: GigaChatClient,
+        chat_llm: GigaChatClient | ChatOpenAI,
+        cypher_generating_llm: ChatOpenAI,
         max_fix_retries: int,
     ) -> None:
         self._gr_repository = graph_rag_repository
@@ -123,7 +124,7 @@ class WorkflowGraphFactory:
 
         if len(db_ctx["errors"]) != 0 or len(db_ctx["warnings"]) != 0:
             prompt = ChatPromptTemplate.from_messages(FIX_CYPHER_QUERY)
-            chain = prompt | RunnableLambda(self._cypher_generating_llm.invoke)
+            chain = prompt | self._cypher_generating_llm.invoke
             response = chain.invoke(
                 {
                     "schema": state["cypher_context"]["schema"],
@@ -138,7 +139,7 @@ class WorkflowGraphFactory:
             db_ctx["warnings"].clear()
         else:
             prompt = ChatPromptTemplate.from_messages(GENERATE_CYPHER_QUERY)
-            chain = prompt | RunnableLambda(self._cypher_generating_llm.invoke)
+            chain = prompt | self._cypher_generating_llm.invoke
             response = chain.invoke(
                 {
                     "schema": state["cypher_context"]["schema"],
@@ -237,13 +238,12 @@ class WorkflowGraphFactory:
                 ),
             }
         )
-        answer = response.content
 
-        state["message_history"].append(AIMessage(content=answer))
+        state["message_history"].append(response)
 
         return {
             **state,
-            "answer": answer,
+            "answer": response.content,
         }
 
     def create_workflow(self) -> CompiledStateGraph:
