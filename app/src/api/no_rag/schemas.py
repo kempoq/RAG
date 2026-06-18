@@ -6,4 +6,6 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    query: str
     answer: str
+    token_usage: dict[str, int]

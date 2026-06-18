@@ -7,6 +7,7 @@ import {
     fillQueryOutput,
     fillRelevantInfoOutput,
     fillTokenUsageOutput,
+    mergeTokenUsage,
     clearInputs,
     autoResizeUserInput
 } from "./modules/rag.js";
@@ -99,13 +100,13 @@ document.getElementById("sendButton").addEventListener("click", async () => {
         },
         body: {"query": query, "temperature": 0.0}
     });
+    const tokenUsage = response["token_usage"];
 
     fillAnswerOutput(response["answer"], "answerOutput");
     fillQueryOutput(response["user_query"]);
     fillRelevantInfoOutput(response["vector_db_info"]);
     fillCypherQueryOutput(response["cypher_query"]);
     fillGraphDbInfoOutput(response["graph_db_info"]);
-    fillTokenUsageOutput(response["token_usage"]);
 
     if (addNoRagRequest) {
         const noRagResponse = await sendApiRequest("/api/v1/no-rag/chat", {
@@ -116,7 +117,10 @@ document.getElementById("sendButton").addEventListener("click", async () => {
             body: {"query": query}
         })
         fillAnswerOutput(noRagResponse["answer"], "noRagAnswerOutput");
+        mergeTokenUsage(tokenUsage, noRagResponse["token_usage"]);
     }
+
+    fillTokenUsageOutput(tokenUsage);
 
     showAnswer(addNoRagRequest);
     clearInputs();

@@ -75,6 +75,16 @@ export function fillQueryOutput(query) {
     document.getElementById("queryOutput").textContent = query;
 }
 
+export function mergeTokenUsage(tu1, tu2) {
+    // tu1 changes
+    Object.keys(tu1).forEach((modelName) => {
+        if (Object.hasOwn(tu2, modelName)) {
+            if (tu2[modelName] == -1) return;
+            tu1[modelName] += tu2[modelName];
+        }
+    });
+}
+
 export function fillTokenUsageOutput(tokenUsage) {
     const usageContainer = document.getElementById("tokenUsageOutput")
 
@@ -85,7 +95,6 @@ export function fillTokenUsageOutput(tokenUsage) {
         usageContainer.appendChild(usageInfo);
     });
 }
-
 
 export function clearInputs() {
     document.getElementById("userInput").value = "";
