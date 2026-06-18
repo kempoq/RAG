@@ -2,13 +2,18 @@ import { sendApiRequest } from "./modules/api.js";
 import { 
     toggleContext,
     showAnswer,
-    hideAnswer,
+    hideOutputs,
     fillAnswerOutput,
     fillQueryOutput,
     fillRelevantInfoOutput,
-    clearInput
+    fillTokenUsageOutput,
+    clearInputs,
+    autoResizeUserInput
 } from "./modules/rag.js";
 import { showLoader, hideLoader } from "./modules/loader.js";
+
+const showMessageText = "Show graph context";
+const hideMessageText = "Hide graph context";
 
 function openCommunityModal() {
     document.getElementById("communityModal").classList.remove("hidden");
@@ -31,18 +36,35 @@ function fillGraphDbInfoOutput(graphDbInfo) {
         document.getElementById("expandButton").classList.add("hidden");
         document.getElementById("graphDbShortOutput").textContent = graphDbInfoString;
     } else {
+        document.getElementById("expandButton").classList.remove("hidden");
         document.getElementById("graphDbShortOutput").textContent = `${graphDbInfoString.slice(0, 200)} ...`;
         document.getElementById("graphDbFullOutput").textContent = graphDbInfoString;
     }
     
 }
 
-function fillTokenUsageOutput(tokenUsage) {
-    document.getElementById("tokenUsageOutput").textContent = tokenUsage;
+function clearOutputs() {
+    document.getElementById("noRagAnswerOutput").innerHTML = "";
+    document.getElementById("answerOutput").innerHTML = "";
+
+    document.getElementById("graphDbShortOutput").textContent = "";
+    document.getElementById("graphDbFullOutput").textContent = "";
+    document.getElementById("cypherQueryOutput").textContent = "";
+    document.getElementById("queryOutput").textContent = "";
+    document.getElementById("tokenUsageOutput").textContent = "";
+
+    // Deleting retrieved context
+    Array.from(document.getElementById("relevantInfoOutput").children).slice(1).forEach((child) => {
+        child.remove();
+    });
 }
 
+document.getElementById("userInput").addEventListener("input", (e) => {
+    autoResizeUserInput(e.target);
+})
+
 document.getElementById("toggleButton").addEventListener("click", () => {
-    toggleContext("Show graph context", "Hide graph context");
+    toggleContext(showMessageText, hideMessageText);
 });
 
 document.getElementById("expandButton").addEventListener("click", () => {
@@ -60,9 +82,13 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.getElementById("sendButton").addEventListener("click", async () => {
-    hideAnswer();
+    hideOutputs(showMessageText);
+    clearOutputs();
     
     const query = document.getElementById("userInput").value;
+    const addNoRagRequest = document.getElementById("noRagCheckbox").checked;
+    const temperature = document.getElementById("temperatureInput").valueAsNumber;
+
     if (query.length === 0) return;
 
     showLoader("Processing", "Generating answer");
@@ -71,16 +97,28 @@ document.getElementById("sendButton").addEventListener("click", async () => {
         headers: {
             "Content-Type": "application/json"
         },
-        body: {"query": query}
+        body: {"query": query, "temperature": 0.0}
     });
 
-    fillAnswerOutput(response["answer"]);
+    fillAnswerOutput(response["answer"], "answerOutput");
     fillQueryOutput(response["user_query"]);
     fillRelevantInfoOutput(response["vector_db_info"]);
     fillCypherQueryOutput(response["cypher_query"]);
     fillGraphDbInfoOutput(response["graph_db_info"]);
     fillTokenUsageOutput(response["token_usage"]);
-    showAnswer();
-    clearInput();
+
+    if (addNoRagRequest) {
+        const noRagResponse = await sendApiRequest("/api/v1/no-rag/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: {"query": query}
+        })
+        fillAnswerOutput(noRagResponse["answer"], "noRagAnswerOutput");
+    }
+
+    showAnswer(addNoRagRequest);
+    clearInputs();
     hideLoader();
 })

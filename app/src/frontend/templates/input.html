@@ -1,0 +1,46 @@
+<div class=<div class="shrink-0 bg-white border-t border-slate-200 py-4">
+    <div class="flex items-center gap-3">
+        
+        <!-- Top-k input with label above -->
+        <div class="flex flex-col items-center shrink-0 select-none">
+            <label for="temperatureInput" class="text-[10px] font-medium text-slate-500 mb-0.5 uppercase tracking-wider">Temp</label>
+            <input 
+                id="temperatureInput"
+                type="number" 
+                min="0"
+                max="2"
+                value="0"
+                class="w-14 rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
+            >
+        </div>
+        
+        <!-- Checkbox -->
+        <label class="flex items-center gap-2 px-2 cursor-pointer select-none shrink-0">
+            <input
+                id="noRagCheckbox"
+                type="checkbox"
+                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            >
+            <span class="text-sm text-slate-600">Request without RAG</span>
+        </label>
+        
+        <!-- Main Input: Textarea -->
+        <div class="flex-1 relative">
+            <textarea 
+                id="userInput"
+                rows="1"
+                placeholder="Ask a question about your documents..."
+                class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none overflow-hidden leading-relaxed"
+            ></textarea>
+        </div>
+        
+        <!-- Send Button -->
+        <button
+            id="sendButton"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 py-3 text-sm font-medium transition-colors flex items-center gap-2 shrink-0"
+        >
+            <span>Send</span>
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+        </button>
+    </div>
+</div>
