@@ -10,6 +10,7 @@ from app.src.api.vector.dependencies import (
 from app.src.api.vector.schemas import (
     AddDocumentsRequest,
     ChatRequest,
+    ChatResponse,
     GetDocumentsRequest,
 )
 
@@ -76,21 +77,17 @@ def get_similar_documents(
     return {"docs": docs}
 
 
-@vector_router.post("/chat")
+@vector_router.post("/chat", response_model=ChatResponse)
 def chat(
     vectore_rag_chat_service: VectorRagChatServiceDep,
     request_data: ChatRequest,
-):
+) -> ChatResponse:
     """Запрос к LLM (RAG)"""
 
-    answer, relevant_info = vectore_rag_chat_service.chat(
+    response = vectore_rag_chat_service.chat(
         query=request_data.query,
         temperature=request_data.temperature,
         docs_count=request_data.docs_count,
     )
 
-    return {
-        "query": request_data.query,
-        "relevant_info": relevant_info,
-        "answer": answer,
-    }
+    return response

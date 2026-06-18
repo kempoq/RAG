@@ -3,7 +3,7 @@ from typing import Any
 
 from app.src.api.graph.repository import GraphRagRepository
 from app.src.api.graph.schemas import ChatResponse
-from app.src.api.graph.utils import extract_response_data
+from app.src.api.graph.utils import extract_necessary_state_data
 from app.src.api.graph.workflow import WorkflowGraphFactory
 from app.src.core.ml_models import GigaChatClient
 
@@ -54,7 +54,7 @@ class GraphRagService:
                 "chat_llm_settings": {"temperature": temperature},
             }
         )
-        response = ChatResponse(**extract_response_data(workflow_state))
+        response = ChatResponse(**extract_necessary_state_data(workflow_state))
         logger.info("Answer is got")
 
         return response

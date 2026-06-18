@@ -15,7 +15,7 @@ def extract_cypher_from_markdown(text: str) -> str:
     return text.strip()
 
 
-def extract_response_data(workflow_state: dict[str, Any]) -> dict[str, Any]:
+def extract_necessary_state_data(workflow_state: dict[str, Any]) -> dict[str, Any]:
     """Извлекает нужные для вывода пользователю поля из экземпляра GraphState (контейнер для данных в Graph QA workflow)"""
 
     res = {
@@ -38,9 +38,9 @@ def extract_response_data(workflow_state: dict[str, Any]) -> dict[str, Any]:
             token_usage = response_metadata.get("token_usage", {"total_tokens": -1})
 
             if model_name in res["token_usage"]:
-                res["token_usage"][model_name] += token_usage.get("total_tokens", 0)
+                res["token_usage"][model_name] += token_usage.get("total_tokens", -1)
             else:
-                res["token_usage"][model_name] = token_usage.get("total_tokens", 0)
+                res["token_usage"][model_name] = token_usage.get("total_tokens", -1)
 
     return res
 

@@ -24,6 +24,13 @@ class ChatRequest(BaseModel):
     temperature: float = Field(ge=0.0, le=2.0)
 
 
+class ChatResponse(BaseModel):
+    query: str
+    answer: str
+    token_usage: dict[str, int]
+    relevant_info: list[str]
+
+
 class GetDocumentsRequest(ChatRequest): ...
 
 

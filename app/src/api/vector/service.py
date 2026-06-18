@@ -5,7 +5,8 @@ from langchain_chroma import Chroma
 
 from app.src.api.vector.constants import QUERY_TEMPLATE
 from app.src.api.vector.documents.service import DocumentsService
-from app.src.api.vector.schemas import VectorDbInfo
+from app.src.api.vector.schemas import ChatResponse, VectorDbInfo
+from app.src.api.vector.utils import extract_necessary_message_data
 from app.src.core.config import settings
 from app.src.core.ml_models import GigaChatClient
 
@@ -82,9 +83,7 @@ class VectorRagChatService:
         self._vs_repository = vector_store
         self._llm = llm
 
-    def chat(
-        self, query: str, temperature: float, docs_count: int
-    ) -> tuple[str, list[str]]:
+    def chat(self, query: str, temperature: float, docs_count: int) -> ChatResponse:
         """
         Реализует логику RAG: отправляет запрос, дополненный данными из векторной БД, в LLM.
         Далее возвращает ответ
@@ -100,11 +99,15 @@ class VectorRagChatService:
         )
 
         if temperature != 0.0:
-            answer = self._llm.get_model_with_new_settings(
+            message = self._llm.get_model_with_new_settings(
                 temperature=temperature
             ).invoke(augmented_query)
         else:
-            answer = self._llm.invoke(augmented_query)
+            message = self._llm.invoke(augmented_query)
 
         logger.info("Answer is got")
-        return answer.content, relevant_docs_content
+        return ChatResponse(
+            query=query,
+            relevant_info=relevant_docs_content,
+            **extract_necessary_message_data(message),
+        )
