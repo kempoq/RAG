@@ -14,6 +14,8 @@ class AddDocumentsRequest(BaseModel):
                 raise ValueError("File size must be less than 50 MB")
             if file.filename.split(".")[-1] != "txt":
                 raise ValueError("Can process only txt files")
+            if file.content_type != "text/plain":
+                raise ValueError("File content type must be text/plain")
 
         return self
 

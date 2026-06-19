@@ -2,6 +2,7 @@ import logging
 
 from fastapi import UploadFile
 from langchain_chroma import Chroma
+from langchain_core.documents import Document
 
 from app.src.api.vector.constants import QUERY_TEMPLATE
 from app.src.api.vector.documents.service import DocumentsService
@@ -15,10 +16,16 @@ logger = logging.getLogger(__name__)
 
 class VectorRagStorageService:
     def __init__(
-        self, documents_service: DocumentsService, vector_store: Chroma
+        self,
+        documents_service: DocumentsService,
+        vector_store: Chroma,
+        max_documents: int,
     ) -> None:
         self._documents_service = documents_service
         self._vs_repository = vector_store
+        # В ChromaDB за раз можно вставить только 5461 эмбеддингов (документов).
+        # Если количество документов больше маскимального, то они делятся и по отдельности вставляются в БД
+        self._max_documents = max_documents
 
     def get_info(self) -> VectorDbInfo:
         """Возвращает различные метаданные по векторной БД"""
@@ -49,13 +56,30 @@ class VectorRagStorageService:
 
         return downloaded_files
 
+    def _get_insert_batches(self, chunks: list[Document]) -> list[list[Document]]:
+        """Делит данные для вставки в векторную БД на батчи (если количество превышает self._max_documents)"""
+
+        logger.debug("Spliting documents into batches")
+        batches = []
+
+        if len(chunks) > self._max_documents:
+            batches = []
+
+            for i in range(0, len(chunks), self._max_documents):
+                batches.append(chunks[i : i + self._max_documents])
+        else:
+            batches.append(chunks)
+
+        logger.info(f"{len(batches)} batches will be inserted in ChromaDB")
+        return batches
+
     def add_documents(self, files: list[UploadFile]) -> list[str]:
         """Добавляет разделенные на чанки документы в векторную БД. Возвращает ID записей в векторной БД"""
 
         logger.info("Start adding documents in vector store")
         exclude_sources = self._get_all_docs_sources()
         logger.debug(f"Exclude sources: {', '.join(exclude_sources)}")
-        docs_chunks = self._documents_service.get_document_chunks(
+        docs_chunks = self._documents_service.get_documents_splitted_by_chunks(
             files, exclude_sources
         )
 
@@ -63,7 +87,10 @@ class VectorRagStorageService:
             logger.info("There are no new documents")
             return []
 
-        ids = self._vs_repository.add_documents(docs_chunks)
+        ids = []
+        for batch in self._get_insert_batches(docs_chunks):
+            ids.extend(self._vs_repository.add_documents(batch))
+            logger.debug("Batch is inserted")
 
         logger.info("Documents are added")
         return ids

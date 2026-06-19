@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     embedding_model_name: str = "text-embedding-bge-m3"
     chunk_size: int = 1000
     chunk_overlap: int = 200
+    # Число, большее 5461, ставить нельзя. Иначе при вставке в ChromaDB будет ошибка
+    max_documents: int = 5461
 
     cypher_llm_base_url: str = "https://api.groq.com/openai/v1"
     cypher_llm_model: str = "llama-3.3-70b-versatile"
