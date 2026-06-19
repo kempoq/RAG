@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Form, status
 from fastapi.responses import Response
 
+from app.src.api.utils import set_cache_control_headers
 from app.src.api.vector.dependencies import (
     VectorRagChatServiceDep,
     VectorRagStorageServiceDep,
@@ -23,20 +24,24 @@ vector_router = APIRouter(prefix="/vector", tags=["vector_rag"])
 
 @vector_router.get("/storage/files", response_model=GetFilesResponse)
 def get_downloaded_files(
-    vectore_rag_service: VectorRagStorageServiceDep,
+    vectore_rag_service: VectorRagStorageServiceDep, response: Response
 ) -> GetFilesResponse:
     """Вывод загруженных файлов"""
 
     files = vectore_rag_service.get_downloaded_files()
+    set_cache_control_headers(response)
 
     return {"files": files}
 
 
 @vector_router.get("/storage/info", response_model=GetStorageInfoResponse)
 def get_storage_info(
-    vectore_rag_service: VectorRagStorageServiceDep,
+    vectore_rag_service: VectorRagStorageServiceDep, response: Response
 ) -> GetStorageInfoResponse:
+    """Общая информация о ChromaDB"""
+
     storage_info = vectore_rag_service.get_info()
+    set_cache_control_headers(response)
 
     return storage_info
 
