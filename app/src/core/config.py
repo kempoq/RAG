@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     max_documents: int = 5461
 
     cypher_llm_base_url: str = "https://api.groq.com/openai/v1"
-    cypher_llm_model: str = "llama-3.3-70b-versatile"
+    cypher_llm_model: str = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile
 
     chat_llm_model: str = "GigaChat-2"
     auth_base_url: str = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
@@ -29,9 +29,9 @@ class EnvSettings(BaseSettings):
     neo4j_user: str
     neo4j_password: SecretStr
     neo4j_database: str
-    embedding_model_api_key: str
-    giga_auth_token: str
-    groq_api_key: str
+    embedding_model_api_key: SecretStr
+    giga_auth_token: SecretStr
+    groq_api_key: SecretStr
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf8", extra="ignore"

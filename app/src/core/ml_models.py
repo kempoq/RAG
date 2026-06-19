@@ -31,7 +31,7 @@ def get_embedding_model_api() -> OpenAIEmbeddings:
         model=settings.embedding_model_name,
         base_url=settings.embedding_base_url,
         check_embedding_ctx_length=False,
-        openai_api_key=env_settings.embedding_model_api_key,
+        openai_api_key=env_settings.embedding_model_api_key.get_secret_value(),
     )
     logger.info("Embedding model is downloaded")
     return embedding_model
@@ -60,7 +60,7 @@ class GigaChatClient:
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "application/json",
             "RqUID": "bca582b8-e12f-47a4-a3c6-730bc28f4422",
-            "Authorization": f"Basic {env_settings.giga_auth_token}",
+            "Authorization": f"Basic {env_settings.giga_auth_token.get_secret_value()}",
         }
 
         response = requests.request(
@@ -130,7 +130,7 @@ def get_openai_llm_client() -> ChatOpenAI:
     llm = ChatOpenAI(
         model=settings.cypher_llm_model,
         base_url=settings.cypher_llm_base_url,
-        api_key=env_settings.groq_api_key,
+        api_key=env_settings.groq_api_key.get_secret_value(),
         temperature=0,
     )
     logger.info("LLM client is initialized")
