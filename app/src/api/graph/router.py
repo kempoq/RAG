@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.src.api.graph.dependencies import GraphRagServiceDep
-from app.src.api.graph.schemas import ChatRequest, ChatResponse
+from app.src.api.graph.schemas import ChatRequest, ChatResponse, GetSchemaResponse
 
 graph_router = APIRouter(prefix="/graph", tags=["graph_rag"])
 
@@ -15,13 +15,13 @@ def get_stats(graph_rag_service: GraphRagServiceDep):
     return graph_stats
 
 
-@graph_router.get("/store/schema")
-def get_graph_schema(graph_rag_service: GraphRagServiceDep):
+@graph_router.get("/store/schema", response_model=GetSchemaResponse)
+def get_graph_schema(graph_rag_service: GraphRagServiceDep) -> GetSchemaResponse:
     """Получение схемы графа"""
 
     graph_schema = graph_rag_service.get_graph_schema()
 
-    return {"schema": graph_schema}
+    return {"graph_schema": graph_schema}
 
 
 @graph_router.post("/chat", response_model=ChatResponse)

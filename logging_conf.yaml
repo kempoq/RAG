@@ -26,6 +26,7 @@ loggers:
     level: INFO
     handlers:
       - verbose_output
+    propagate: false
   uvicorn.access: &uvicorn_logger
     level: INFO
     handlers:

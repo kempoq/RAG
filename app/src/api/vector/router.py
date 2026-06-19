@@ -1,7 +1,7 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Form
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Form, status
+from fastapi.responses import Response
 
 from app.src.api.vector.dependencies import (
     VectorRagChatServiceDep,
@@ -9,16 +9,22 @@ from app.src.api.vector.dependencies import (
 )
 from app.src.api.vector.schemas import (
     AddDocumentsRequest,
+    AddDocumentsResponse,
     ChatRequest,
     ChatResponse,
     GetDocumentsRequest,
+    GetFilesResponse,
+    GetSimilarDocsResponse,
+    GetStorageInfoResponse,
 )
 
 vector_router = APIRouter(prefix="/vector", tags=["vector_rag"])
 
 
-@vector_router.get("/storage/files")
-def get_downloaded_files(vectore_rag_service: VectorRagStorageServiceDep):
+@vector_router.get("/storage/files", response_model=GetFilesResponse)
+def get_downloaded_files(
+    vectore_rag_service: VectorRagStorageServiceDep,
+) -> GetFilesResponse:
     """Вывод загруженных файлов"""
 
     files = vectore_rag_service.get_downloaded_files()
@@ -26,48 +32,47 @@ def get_downloaded_files(vectore_rag_service: VectorRagStorageServiceDep):
     return {"files": files}
 
 
-@vector_router.get("/storage/info")
-def get_storage_info(vectore_rag_service: VectorRagStorageServiceDep):
+@vector_router.get("/storage/info", response_model=GetStorageInfoResponse)
+def get_storage_info(
+    vectore_rag_service: VectorRagStorageServiceDep,
+) -> GetStorageInfoResponse:
     storage_info = vectore_rag_service.get_info()
 
     return storage_info
 
 
-@vector_router.post("/storage/docs")
+@vector_router.post("/storage/docs", response_model=AddDocumentsResponse)
 def add_documents(
     vectore_rag_service: VectorRagStorageServiceDep,
     request_data: Annotated[
         AddDocumentsRequest, Form(..., media_type="multipart/form-data")
     ],
-):
+    response: Response,
+) -> AddDocumentsResponse:
     """Добавление документов в векторную БД"""
 
     ids = vectore_rag_service.add_documents(files=request_data.files)
 
     if ids:
-        response = JSONResponse(
-            content={
-                "msg": f"В векторную БД загружено {len(ids)} документов",
-                "ids10": ids[:10],
-            },
-            status_code=201,
-        )
+        response_content = {
+            "msg": f"{len(ids)} embeddings were inserted in ChromaDB",
+            "ids10": ids[:10],
+        }
+        response.status_code = status.HTTP_201_CREATED
     else:
-        response = JSONResponse(
-            content={
-                "msg": "Документы не были загружены в БД",
-                "ids10": None,
-            },
-            status_code=200,
-        )
+        response_content = {
+            "msg": "No embeddings were inserted in ChromaDB. Chosen files have already been processed",
+            "ids10": None,
+        }
+        response.status_code = status.HTTP_200_OK
 
-    return response
+    return response_content
 
 
-@vector_router.post("/storage/search")
+@vector_router.post("/storage/search", response_model=GetSimilarDocsResponse)
 def get_similar_documents(
     vectore_rag_service: VectorRagStorageServiceDep, request_data: GetDocumentsRequest
-):
+) -> GetSimilarDocsResponse:
     """Возвращает документы, наиболее релевантные к запросу"""
 
     docs = vectore_rag_service.get_documents(

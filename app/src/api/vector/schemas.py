@@ -20,6 +20,11 @@ class AddDocumentsRequest(BaseModel):
         return self
 
 
+class AddDocumentsResponse(BaseModel):
+    msg: str
+    ids10: list[str] | None = Field(max_length=10)
+
+
 class ChatRequest(BaseModel):
     query: str = Field(min_length=1)
     docs_count: int = Field(ge=3, default=3)
@@ -39,3 +44,14 @@ class GetDocumentsRequest(ChatRequest): ...
 class VectorDbInfo(BaseModel):
     total_docs: int
     embedding_model: str
+
+
+class GetStorageInfoResponse(VectorDbInfo): ...
+
+
+class GetFilesResponse(BaseModel):
+    files: list[str]
+
+
+class GetSimilarDocsResponse(BaseModel):
+    docs: list[tuple[str, float]]

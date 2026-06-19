@@ -10,6 +10,8 @@ no_rag_router = APIRouter(prefix="/no-rag", tags=["no rag"])
 def chat(no_rag_service: NoRagServiceDep, request_data: ChatRequest) -> ChatResponse:
     """Отправка запросов в LLM"""
 
-    response = no_rag_service.chat(query=request_data.query)
+    response = no_rag_service.chat(
+        query=request_data.query, temperature=request_data.temperature
+    )
 
     return response

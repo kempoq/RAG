@@ -155,18 +155,22 @@ function clearSelectedFiles() {
 }
 
 document.getElementById("uploadButton").addEventListener("click", async () => {
-    if (selectedFiles.length === 0) return;
+    if (selectedFiles.length === 0) {
+        alert("Choose some files");
+        return;
+    };
 
     showLoader("Processing", "Embedding files and saving to ChromaDB");
     const formData = new FormData();
     selectedFiles.forEach(f => formData.append("files", f));
 
-    await sendApiRequest("/api/v1/vector/storage/docs", {
+    const response = await sendApiRequest("/api/v1/vector/storage/docs", {
         method: "POST",
         body: formData
     });
     clearSelectedFiles();
     hideLoader();
+    alert(response.msg);
 });
 
 await fillFilesList();

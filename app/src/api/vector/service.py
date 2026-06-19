@@ -42,9 +42,25 @@ class VectorRagStorageService:
         return vector_db_info
 
     def _get_all_docs_sources(self) -> list[str]:
-        """Возвращает все уникальные значения метатега 'source' (названия файлов, которые уже были загружены)"""
+        """
+        Возвращает все уникальные значения метатега 'source' (названия файлов, которые уже были загружены).\n
+        В будущем нужно добавить БД SQLite и записывать, а далее и забирать, названия файлов при эмбеддинге туда.
+        При большом количестве эмбеддингов в хранилище текущий вариант будет неэффективен.
+        """
 
-        metadata = self._vs_repository.get(include=["metadatas"])["metadatas"]
+        total_docs = self._vs_repository._collection.count()
+        step = 20000
+        metadata = []
+
+        for i in range(0, total_docs, step):
+            metadata.extend(
+                self._vs_repository.get(
+                    include=["metadatas"],
+                    offset=i,
+                    limit=step,
+                )["metadatas"]
+            )
+
         return list(set([meta["source"] for meta in metadata if meta]))
 
     def get_downloaded_files(self) -> list[str]:

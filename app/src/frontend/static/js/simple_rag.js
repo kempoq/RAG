@@ -8,6 +8,7 @@ import {
     fillRelevantInfoOutput,
     fillTokenUsageOutput,
     mergeTokenUsage,
+    getInputs,
     clearInputs,
     autoResizeUserInput
 } from "./modules/rag.js"
@@ -41,19 +42,21 @@ document.getElementById("sendButton").addEventListener("click", async () => {
     hideOutputs(showMessageText);
     clearOutputs();
 
-    const query = document.getElementById("userInput").value;
-    const addNoRagRequest = document.getElementById("noRagCheckbox").checked;
-    const temperature = document.getElementById("temperatureInput").valueAsNumber;
+    const [ query, addNoRagRequest, temperature, docsCount ] = getInputs();
 
-    if (query.length === 0) return;
+    if (query.length === 0) {
+        alert("Input something");
+        return;
+    }
     
     showLoader("Processing", "Generating answer");
     const response = await sendApiRequest("/api/v1/vector/chat", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept-Encoding": "gzip"
         },
-        body: {"query": query, "temperature": temperature}
+        body: {"query": query, "temperature": temperature, "docs_count": docsCount}
     });
     const tokenUsage = response["token_usage"];
 
@@ -65,9 +68,10 @@ document.getElementById("sendButton").addEventListener("click", async () => {
         const noRagResponse = await sendApiRequest("/api/v1/no-rag/chat", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept-Encoding": "gzip"
             },
-            body: {"query": query}
+            body: {"query": query, "temperature": temperature}
         })
         fillAnswerOutput(noRagResponse["answer"], "noRagAnswerOutput");
         mergeTokenUsage(tokenUsage, noRagResponse["token_usage"]);

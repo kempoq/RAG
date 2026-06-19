@@ -22,7 +22,7 @@ def get_vector_store(request: Request) -> Chroma:
             collection_metadata={"hnsw:space": "cosine"},
         )
     except Exception as e:
-        raise VectoreDbError("Initialization failed", e)
+        raise VectoreDbError("Initialization is failed", e)
 
     logger.debug("Vector store client is got")
     return chroma_client

@@ -65,7 +65,10 @@ export function fillRelevantInfoOutput(relevantInfo) {
 
     relevantInfo.forEach(ri => {
         const riString = document.createElement("p");
-        riString.classList.add("text-sm", "text-slate-700", "leading-relaxed", "mt-2");
+        riString.classList.add(
+            "text-sm", "text-slate-700", "rounded-xl", "border",
+            "border-indigo-100/80", "leading-relaxed", "p-2", "mt-2"
+        );
         riString.textContent = ri;
         relevantInfoContainer.appendChild(riString);
     })
@@ -96,8 +99,20 @@ export function fillTokenUsageOutput(tokenUsage) {
     });
 }
 
+export function getInputs() {
+    const query = document.getElementById("userInput").value;
+    const addNoRagRequest = document.getElementById("noRagCheckbox").checked;
+    const temperature = document.getElementById("temperatureInput").valueAsNumber;
+    const docsCount = document.getElementById("docsCountInput").valueAsNumber;
+
+    return [query, addNoRagRequest, temperature, docsCount]
+}
+
 export function clearInputs() {
-    document.getElementById("userInput").value = "";
+    const userInput = document.getElementById("userInput");
+    userInput.value = "";
     document.getElementById("noRagCheckbox").checked = false;
     document.getElementById("temperatureInput").value = 0;
+    document.getElementById("docsCountInput").value = 3;
+    autoResizeUserInput(userInput);
 }

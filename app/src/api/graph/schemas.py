@@ -3,6 +3,10 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class GetSchemaResponse(BaseModel):
+    graph_schema: str
+
+
 class ChatRequest(BaseModel):
     query: str = Field(min_length=1)
     docs_count: int = Field(ge=3, default=3)
