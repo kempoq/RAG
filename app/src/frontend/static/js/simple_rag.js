@@ -48,7 +48,7 @@ document.getElementById("sendButton").addEventListener("click", async () => {
         alert("Input something");
         return;
     }
-    
+
     showLoader("Processing", "Generating answer");
     const response = await sendApiRequest("/api/v1/vector/chat", {
         method: "POST",

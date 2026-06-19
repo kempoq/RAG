@@ -100,7 +100,7 @@ export function fillTokenUsageOutput(tokenUsage) {
 }
 
 export function getInputs() {
-    const query = document.getElementById("userInput").value;
+    const query = document.getElementById("userInput").value.trim();
     const addNoRagRequest = document.getElementById("noRagCheckbox").checked;
     const temperature = document.getElementById("temperatureInput").valueAsNumber;
     const docsCount = document.getElementById("docsCountInput").valueAsNumber;
