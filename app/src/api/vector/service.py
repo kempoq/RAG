@@ -1,8 +1,10 @@
 import logging
 
 from fastapi import UploadFile
+from httpx import ReadTimeout
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_core.messages import AIMessage
 
 from app.src.api.vector.constants import QUERY_TEMPLATE
 from app.src.api.vector.documents.service import DocumentsService
@@ -141,12 +143,16 @@ class VectorRagChatService:
             relevant_information="\n".join(relevant_docs_content),
         )
 
-        if temperature != 0.0:
-            message = self._llm.get_model_with_new_settings(
-                temperature=temperature
-            ).invoke(augmented_query)
-        else:
-            message = self._llm.invoke(augmented_query)
+        try:
+            if temperature != 0.0:
+                message = self._llm.get_model_with_new_settings(
+                    temperature=temperature
+                ).invoke(augmented_query)
+            else:
+                message = self._llm.invoke(augmented_query)
+        except ReadTimeout as rt:
+            logger.error(str(rt))
+            message = AIMessage(content="Timeout expired")
 
         logger.info("Answer is got")
         return ChatResponse(

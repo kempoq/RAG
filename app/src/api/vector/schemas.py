@@ -25,9 +25,12 @@ class AddDocumentsResponse(BaseModel):
     ids10: list[str] | None = Field(max_length=10)
 
 
-class ChatRequest(BaseModel):
+class GetDocumentsRequest(BaseModel):
     query: str = Field(min_length=1)
     docs_count: int = Field(ge=3, default=3)
+
+
+class ChatRequest(GetDocumentsRequest):
     temperature: float = Field(ge=0.0, le=2.0)
 
 
@@ -36,9 +39,6 @@ class ChatResponse(BaseModel):
     answer: str
     token_usage: dict[str, int]
     relevant_info: list[str]
-
-
-class GetDocumentsRequest(ChatRequest): ...
 
 
 class VectorDbInfo(BaseModel):

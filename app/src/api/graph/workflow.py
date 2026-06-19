@@ -1,6 +1,7 @@
 import logging
 from typing import Any, TypedDict
 
+from httpx import ReadTimeout
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
@@ -223,21 +224,25 @@ class WorkflowGraphFactory:
                 **state["chat_llm_settings"]
             ).invoke
         )
-        response = chain.invoke(
-            {
-                "question": state["question"],
-                "graph_context": (
-                    str(graph_db_info)
-                    if graph_db_info
-                    else "В базе нет информации о связях"
-                ),
-                "vector_context": (
-                    "\n".join(vector_db_info)
-                    if vector_db_info
-                    else "В базе нет доп. контекста.\nОтвечай на основе своих знаний."
-                ),
-            }
-        )
+        try:
+            response = chain.invoke(
+                {
+                    "question": state["question"],
+                    "graph_context": (
+                        str(graph_db_info)
+                        if graph_db_info
+                        else "В базе нет информации о связях"
+                    ),
+                    "vector_context": (
+                        "\n".join(vector_db_info)
+                        if vector_db_info
+                        else "В базе нет доп. контекста.\nОтвечай на основе своих знаний."
+                    ),
+                }
+            )
+        except ReadTimeout as rt:
+            logger.error(str(rt))
+            response = AIMessage(content="Timeout expired")
 
         state["message_history"].append(response)
 
